@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="perpusApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perpustakaan App</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <!-- AdminLTE -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.1.0/css/adminlte.min.css" rel="stylesheet">
+    <!-- DataTables -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="assets/css/style.css" rel="stylesheet">
+</head>
+<body class="hold-transition">
+    <div ng-view></div>
+
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.1.0/js/adminlte.min.js"></script>
+    <!-- DataTables -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.7/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.7/js/responsive.bootstrap4.min.js"></script>
+    
+    <!-- Instalasi AngularJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.2/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-route/1.8.2/angular-route.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-cookies/1.8.2/angular-cookies.min.js"></script>
+    
+    <!-- Config -->
+    <script src="app/app.js"></script>
+    <script src="app/config/constants.js"></script>
+    <script src="app/config/routes.js"></script>
+    
+    <!-- Services -->
+    <script src="app/services/auth.service.js"></script>
+    <script src="app/services/api.service.js"></script>
+    <script src="app/services/book.service.js"></script>
+    <script src="app/services/category.service.js"></script>
+    <script src="app/services/member.service.js"></script>
+    <script src="app/services/borrow.service.js"></script>
+    
+    <!-- Controllers -->
+    <script src="app/controllers/auth/login.controller.js"></script>
+    <script src="app/controllers/auth/register.controller.js"></script>
+    <script src="app/controllers/admin/dashboard.controller.js"></script>
+    <script src="app/controllers/admin/kategori.controller.js"></script>
+    <script src="app/controllers/admin/buku.controller.js"></script>
+    <script src="app/controllers/admin/peminjaman.controller.js"></script>
+    <script src="app/controllers/admin/member.controller.js"></script>
+    <script src="app/controllers/member/dashboard.controller.js"></script>
+    <script src="app/controllers/member/buku.controller.js"></script>
+    <script src="app/controllers/member/peminjaman.controller.js"></script>
+</body>
+</html>

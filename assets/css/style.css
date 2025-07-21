@@ -1,0 +1,169 @@
+/* Custom styles for Perpustakaan App */
+
+/* Login & Register pages */
+.login-page,
+.register-page {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.login-box,
+.register-box {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.login-logo,
+.register-logo {
+    margin-bottom: 25px;
+}
+
+.login-logo a,
+.register-logo a {
+    color: #ffffff;
+}
+
+/* Book catalog cards */
+.book-card {
+    height: 100%;
+    transition: transform 0.2s;
+}
+
+.book-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.book-card .card-img-top {
+    height: 250px;
+    object-fit: cover;
+}
+
+.book-card .card-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dashboard stats */
+.small-box {
+    overflow: hidden;
+}
+
+.small-box .icon {
+    transition: transform 0.3s;
+}
+
+.small-box:hover .icon {
+    transform: scale(1.1);
+}
+
+/* Custom badges */
+.badge-borrowed {
+    background-color: #ffc107;
+    color: #000000;
+}
+
+.badge-returned {
+    background-color: #28a745;
+    color: #ffffff;
+}
+
+.badge-overdue {
+    background-color: #dc3545;
+    color: #ffffff;
+}
+
+/* Table improvements */
+.table-responsive {
+    margin-bottom: 0;
+}
+
+.table th {
+    background-color: #f4f6f9;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Modal customization */
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Pagination customization */
+.pagination {
+    margin-bottom: 0;
+}
+
+.page-link {
+    color: #007bff;
+}
+
+.page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.loading-spinner i {
+    color: #007bff;
+    margin-bottom: 1rem;
+}
+
+/* Alert customization */
+.alert {
+    margin-bottom: 1rem;
+    border-radius: 4px;
+}
+
+.alert-dismissible .close {
+    padding: 0.75rem 1.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .book-card .card-img-top {
+        height: 200px;
+    }
+    
+    .login-box,
+    .register-box {
+        margin-top: 20px;
+        width: 90%;
+    }
+    
+    .table-responsive {
+        border: 0;
+    }
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .content-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .table {
+        width: 100% !important;
+    }
+}

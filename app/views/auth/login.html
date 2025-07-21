@@ -1,0 +1,115 @@
+<div class="login-page">
+    <div class="login-box">
+        <div class="login-logo">
+            <b>Perpustakaan</b> App
+        </div>
+        
+        <div class="card">
+            <div class="card-body login-card-body">
+                <p class="login-box-msg">Sign in to start your session</p>
+                
+                <div ng-if="error" class="alert alert-danger alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    {{ error }}
+                </div>
+                
+                <form ng-submit="login()" novalidate>
+                    <div class="input-group mb-3">
+                        <input type="text" 
+                               class="form-control" 
+                               placeholder="Username" 
+                               ng-model="credentials.username"
+                               required>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-user"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group mb-3">
+                        <input type="password" 
+                               class="form-control" 
+                               placeholder="Password" 
+                               ng-model="credentials.password"
+                               required>
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-lock"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="icheck-primary">
+                                <input type="checkbox" id="remember">
+                                <label for="remember">Remember Me</label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <button type="submit" 
+                                    class="btn btn-primary btn-block"
+                                    ng-disabled="loading">
+                                <span ng-if="loading">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                                </span>
+                                <span ng-if="!loading">Sign In</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <p class="mb-1">
+                    <a href="#">I forgot my password</a>
+                </p>
+                <p class="mb-0">
+                    <a href="#register" class="text-center" ng-click="goToRegister()">Register a new membership</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-box {
+    width: 360px;
+    margin: auto;
+}
+
+.login-logo {
+    font-size: 35px;
+    text-align: center;
+    margin-bottom: 25px;
+    font-weight: 300;
+    color: white;
+}
+
+.login-logo b {
+    font-weight: 600;
+}
+
+.card {
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    border: none;
+    border-radius: 10px;
+}
+
+.login-card-body {
+    padding: 20px;
+}
+
+.login-box-msg {
+    margin: 0 0 20px 0;
+    text-align: center;
+    color: #666;
+}
+</style>

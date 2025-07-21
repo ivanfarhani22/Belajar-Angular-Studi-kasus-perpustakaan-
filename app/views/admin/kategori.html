@@ -1,0 +1,456 @@
+<div class="wrapper">
+    <!-- Header Navigation -->
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" data-widget="pushmenu" href="javascript:void(0);">
+                    <i class="fas fa-bars"></i>
+                </a>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="javascript:void(0);" role="button" 
+                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="far fa-user"></i> {{ currentUser.name }}
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <a href="javascript:void(0);" class="dropdown-item" ng-click="logout()">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                    </a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <a href="#/admin/dashboard" class="brand-link">
+            <img src="https://via.placeholder.com/33x33/007bff/ffffff?text=P" class="brand-image img-circle elevation-3">
+            <span class="brand-text font-weight-light">Perpustakaan</span>
+        </a>
+        <div class="sidebar">
+            <nav class="mt-2">
+                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                    <li class="nav-item">
+                        <a href="#/admin/dashboard" class="nav-link">
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <p>Dashboard</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#/admin/kategori" class="nav-link active">
+                            <i class="nav-icon fas fa-tags"></i>
+                            <p>Kategori</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#/admin/buku" class="nav-link">
+                            <i class="nav-icon fas fa-book"></i>
+                            <p>Buku</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#/admin/member" class="nav-link">
+                            <i class="nav-icon fas fa-users"></i>
+                            <p>Member</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#/admin/peminjaman" class="nav-link">
+                            <i class="nav-icon fas fa-book-reader"></i>
+                            <p>Peminjaman</p>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Content -->
+    <div class="content-wrapper">
+        <section class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1>Manajemen Kategori</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="#/admin/dashboard">Home</a></li>
+                            <li class="breadcrumb-item active">Kategori</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content">
+            <div class="container-fluid">
+                <!-- Alert Messages -->
+                <div ng-if="error" class="alert alert-danger alert-dismissible fade show">
+                    <button type="button" class="close" ng-click="clearError()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{ error }}
+                </div>
+                <div ng-if="success" class="alert alert-success alert-dismissible fade show">
+                    <button type="button" class="close" ng-click="clearSuccess()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{ success }}
+                </div>
+
+                <!-- Main Card -->
+                <div class="card">
+                    <!-- Update card-header section -->
+<div class="card-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <h3 class="card-title mb-2 mb-md-0">Daftar Kategori</h3>
+        <div class="card-tools d-flex align-items-center">
+            <!-- Search Form -->
+            <div class="input-group input-group-sm mr-2" style="width: 200px;">
+                <input type="text" 
+                       class="form-control" 
+                       placeholder="Cari kategori..."
+                       ng-model="searchQuery"
+                       ng-model-options="{ debounce: 500 }"
+                       ng-change="performSearch()">
+                <div class="input-group-append" ng-if="searchQuery">
+                    <button class="btn btn-default" 
+                            type="button"
+                            ng-click="clearSearch()"
+                            title="Hapus pencarian">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Add Button -->
+            <button class="btn btn-primary btn-sm" ng-click="showAdd()">
+                <i class="fas fa-plus"></i> Tambah Kategori
+            </button>
+        </div>
+    </div>
+</div>
+                    <div class="card-body">
+                        <!-- Loading -->
+                        <div ng-if="loading" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Memuat data kategori...</p>
+                        </div>
+
+                        <!-- Data Table -->
+                        <div ng-if="!loading" class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th width="80">ID</th>
+                                        <th>Nama Kategori</th>
+                                        <th width="120">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="category in categories" ng-if="categories.length > 0">
+                                        <td>{{ category.id }}</td>
+                                        <td>{{ category.nama_kategori }}</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button class="btn btn-info btn-sm" ng-click="showEdit(category)" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-danger btn-sm" ng-click="showDelete(category)" title="Hapus">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr ng-if="categories.length === 0">
+                                        <td colspan="3" class="text-center text-muted">Tidak ada data kategori</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <!-- Pagination -->
+                            <div class="pagination-wrapper mt-3" ng-if="pagination.last_page > 1">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6 mb-2 mb-md-0">
+                                        <div class="pagination-info text-muted">
+                                            Menampilkan {{ pagination.from || 0 }} - {{ pagination.to || 0 }} dari {{ pagination.total }} data
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <nav>
+                                            <ul class="pagination justify-content-md-end mb-0">
+                                                <li class="page-item" ng-class="{disabled: pagination.current_page === 1}">
+                                                    <a class="page-link" href="javascript:void(0);" ng-click="loadCategoriesPaginated(1)">
+                                                        <i class="fas fa-angle-double-left"></i>
+                                                    </a>
+                                                </li>
+                                                <li class="page-item" ng-class="{disabled: pagination.current_page === 1}">
+                                                    <a class="page-link" href="javascript:void(0);" ng-click="loadCategoriesPaginated(pagination.current_page - 1)">
+                                                        <i class="fas fa-angle-left"></i>
+                                                    </a>
+                                                </li>
+                                                <li class="page-item" ng-repeat="page in [] | range:pagination.last_page" 
+                                                    ng-class="{active: page === pagination.current_page}"
+                                                    ng-if="page >= pagination.current_page - 2 && page <= pagination.current_page + 2">
+                                                    <a class="page-link" href="javascript:void(0);" ng-click="loadCategoriesPaginated(page)">
+                                                        {{ page }}
+                                                    </a>
+                                                </li>
+                                                <li class="page-item" ng-class="{disabled: pagination.current_page === pagination.last_page}">
+                                                    <a class="page-link" href="javascript:void(0);" ng-click="loadCategoriesPaginated(pagination.current_page + 1)">
+                                                        <i class="fas fa-angle-right"></i>
+                                                    </a>
+                                                </li>
+                                                <li class="page-item" ng-class="{disabled: pagination.current_page === pagination.last_page}">
+                                                    <a class="page-link" href="javascript:void(0);" ng-click="loadCategoriesPaginated(pagination.last_page)">
+                                                        <i class="fas fa-angle-double-right"></i>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" ng-class="{'show': showAddModal || showEditModal || showDeleteModal}" ng-if="showAddModal || showEditModal || showDeleteModal"></div>
+
+<!-- Add Modal -->
+<div class="modal fade" ng-class="{'show': showAddModal}" style="display: block;" ng-if="showAddModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    <i class="fas fa-plus-circle"></i> Tambah Kategori
+                </h4>
+                <button type="button" class="close" ng-click="closeModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form ng-submit="createCategory()" name="addForm" novalidate>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nama_kategori">Nama Kategori <span class="text-danger">*</span></label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="nama_kategori" 
+                               name="nama_kategori"
+                               ng-model="categoryForm.nama_kategori" 
+                               placeholder="Masukkan nama kategori"
+                               required
+                               ng-class="{'is-invalid': addForm.nama_kategori.$invalid && addForm.nama_kategori.$touched}">
+                        <div class="invalid-feedback" ng-if="addForm.nama_kategori.$invalid && addForm.nama_kategori.$touched">
+                            Nama kategori harus diisi
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" ng-click="closeModal()">
+                        <i class="fas fa-times"></i> Batal
+                    </button>
+                    <button type="submit" class="btn btn-primary" ng-disabled="loading || addForm.$invalid">
+                        <span ng-if="loading">
+                            <i class="fas fa-spinner fa-spin"></i> Menyimpan...
+                        </span>
+                        <span ng-if="!loading">
+                            <i class="fas fa-save"></i> Simpan
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" ng-class="{'show': showEditModal}" style="display: block;" ng-if="showEditModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    <i class="fas fa-edit"></i> Edit Kategori
+                </h4>
+                <button type="button" class="close" ng-click="closeModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form ng-submit="updateCategory()" name="editForm" novalidate>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="edit_nama_kategori">Nama Kategori <span class="text-danger">*</span></label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="edit_nama_kategori" 
+                               name="edit_nama_kategori"
+                               ng-model="categoryForm.nama_kategori" 
+                               placeholder="Masukkan nama kategori"
+                               required
+                               ng-class="{'is-invalid': editForm.edit_nama_kategori.$invalid && editForm.edit_nama_kategori.$touched}">
+                        <div class="invalid-feedback" ng-if="editForm.edit_nama_kategori.$invalid && editForm.edit_nama_kategori.$touched">
+                            Nama kategori harus diisi
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" ng-click="closeModal()">
+                        <i class="fas fa-times"></i> Batal
+                    </button>
+                    <button type="submit" class="btn btn-primary" ng-disabled="loading || editForm.$invalid">
+                        <span ng-if="loading">
+                            <i class="fas fa-spinner fa-spin"></i> Mengupdate...
+                        </span>
+                        <span ng-if="!loading">
+                            <i class="fas fa-save"></i> Update
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" ng-class="{'show': showDeleteModal}" style="display: block;" ng-if="showDeleteModal">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-warning"></i> Konfirmasi Hapus
+                </h4>
+                <button type="button" class="close" ng-click="closeModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Peringatan!</strong>
+                </div>
+                <p>Apakah Anda yakin ingin menghapus kategori:</p>
+                <div class="text-center mb-3">
+                    <span class="badge badge-danger badge-lg">{{ categoryToDelete.nama_kategori }}</span>
+                </div>
+                <p class="text-muted small">
+                    <i class="fas fa-info-circle"></i> 
+                    Tindakan ini tidak dapat dibatalkan.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" ng-click="closeModal()">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <button type="button" class="btn btn-danger" ng-click="deleteCategory()" ng-disabled="loading">
+                    <span ng-if="loading">
+                        <i class="fas fa-spinner fa-spin"></i> Menghapus...
+                    </span>
+                    <span ng-if="!loading">
+                        <i class="fas fa-trash"></i> Hapus
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modal & Backdrop */
+.modal { background-color: rgba(0, 0, 0, 0.5); z-index: 1050; }
+.modal.show { display: block !important; }
+.modal-backdrop { position: fixed; top: 0; left: 0; z-index: 1040; width: 100vw; height: 100vh; background-color: #000; }
+.modal-backdrop.show { opacity: 0.5; }
+
+/* Components */
+.spinner-border { width: 3rem; height: 3rem; }
+.btn-group .btn { margin-right: 2px; }
+.btn-group .btn:last-child { margin-right: 0; }
+
+/* Alerts */
+.alert { margin-bottom: 20px; border: none; border-radius: 0.375rem; }
+.alert-danger { background-color: #f8d7da; color: #721c24; }
+.alert-success { background-color: #d1e7dd; color: #0f5132; }
+.alert-warning { background-color: #fff3cd; color: #856404; }
+
+/* Cards */
+.card { border: none; box-shadow: 0 0 1px rgba(0, 0, 0, 0.125), 0 1px 3px rgba(0, 0, 0, 0.2); }
+.card-header { background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; }
+.card-tools { float: right; }
+
+/* Add to existing style section */
+.card-tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-tools .input-group {
+    margin-bottom: 0;
+}
+
+.card-tools .input-group-append .btn {
+    border-color: #ced4da;
+    background-color: #fff;
+}
+
+.card-tools .input-group-append .btn:hover {
+    background-color: #e9ecef;
+}
+
+@media (max-width: 768px) {
+    .card-header .d-flex {
+        flex-direction: column;
+    }
+    
+    .card-tools {
+        width: 100%;
+        margin-top: 0.5rem;
+        flex-direction: column;
+    }
+    
+    .card-tools .input-group {
+        width: 100% !important;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Tables */
+.table { margin-bottom: 0; }
+.table th { background-color: #f8f9fa; font-weight: 600; border-top: none; }
+.table td { vertical-align: middle; }
+
+/* Form Validation */
+.is-invalid { border-color: #dc3545; }
+.invalid-feedback { display: block; color: #dc3545; font-size: 0.875em; margin-top: 0.25rem; }
+
+/* Pagination */
+.pagination-wrapper { padding: 1rem 0; border-top: 1px solid #dee2e6; }
+.pagination-info { font-size: 0.875rem; padding: 0.5rem 0; }
+.pagination { margin-bottom: 0; }
+.page-link { padding: 0.375rem 0.75rem; color: #007bff; background-color: #fff; border: 1px solid #dee2e6; }
+.page-link:hover { color: #0056b3; background-color: #e9ecef; border-color: #dee2e6; }
+.page-item.active .page-link { background-color: #007bff; border-color: #007bff; color: #fff; }
+.page-item.disabled .page-link { color: #6c757d; pointer-events: none; background-color: #fff; border-color: #dee2e6; }
+
+/* Utilities */
+.py-4 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+.badge-lg { font-size: 1rem; padding: 0.5rem 0.75rem; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .pagination { justify-content: center !important; }
+    .pagination-info { text-align: center; }
+    .card-tools { float: none; margin-top: 0.5rem; }
+    .btn-group { display: flex; flex-direction: column; gap: 2px; }
+    .btn-group .btn { margin-right: 0; }
+}
+</style>

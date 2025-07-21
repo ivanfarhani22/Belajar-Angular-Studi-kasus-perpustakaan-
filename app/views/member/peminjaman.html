@@ -1,0 +1,237 @@
+<div class="wrapper">
+    <!-- Navbar -->
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" data-widget="pushmenu" href="javascript:void(0);">
+                    <i class="fas fa-bars"></i>
+                </a>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="javascript:void(0);" role="button" 
+                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="far fa-user"></i> {{ currentUser.name }}
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <a href="javascript:void(0);" class="dropdown-item" ng-click="logout()">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                    </a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Sidebar -->
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <a href="#/member/dashboard" class="brand-link">
+            <img src="https://via.placeholder.com/33x33/007bff/ffffff?text=P" class="brand-image img-circle elevation-3">
+            <span class="brand-text font-weight-light">Perpustakaan</span>
+        </a>
+
+        <div class="sidebar">
+            <nav class="mt-2">
+                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                    <li class="nav-item">
+                        <a href="#/member/dashboard" class="nav-link">
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <p>Dashboard</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#/member/buku" class="nav-link">
+                            <i class="nav-icon fas fa-book"></i>
+                            <p>Katalog Buku</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#/member/peminjaman" class="nav-link active">
+                            <i class="nav-icon fas fa-bookmark"></i>
+                            <p>Peminjaman Saya</p>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+        <!-- Content Header -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Peminjaman Saya</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="#/member/dashboard">Home</a></li>
+                            <li class="breadcrumb-item active">Peminjaman</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                <!-- Alert Messages -->
+                <div ng-if="success" class="alert alert-success alert-dismissible">
+                    <button type="button" class="close" ng-click="clearAlert()">&times;</button>
+                    {{ success }}
+                </div>
+                <div ng-if="error" class="alert alert-danger alert-dismissible">
+                    <button type="button" class="close" ng-click="clearAlert()">&times;</button>
+                    {{ error }}
+                </div>
+
+                <!-- Filters -->
+                <!-- Data Table -->
+                <div class="card">
+                    <div class="card-body">
+                        <div ng-if="loading" class="text-center">
+                            <i class="fas fa-spinner fa-spin"></i> Memuat data...
+                        </div>
+                        
+                        <div ng-if="!loading">
+                            <table id="borrowsTable" class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Judul Buku</th>
+                                        <th>Kode Buku</th>
+                                        <th>Pengarang</th>
+                                        <th>Tanggal</th>
+                                        <th>Status</th>
+                                        <th>Sisa Waktu</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="borrow in borrows">
+                                        <td>{{ borrow.id }}</td>
+                                        <td>{{ getBookTitle(borrow) }}</td>
+                                        <td>{{ getBookCode(borrow) }}</td>
+                                        <td>{{ getBookAuthor(borrow) }}</td>
+                                        <td>
+                                            <small class="text-muted">{{ getDateLabel(borrow) }}:</small><br>
+                                            {{ getDisplayDate(borrow) }}
+                                        </td>
+                                        <td>
+                                            <span class="badge {{ getStatusClass(borrow) }}">
+                                                {{ getStatusText(borrow) }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span ng-if="getActualStatus(borrow) === 'borrowed' || getActualStatus(borrow) === 'overdue'" 
+                                                class="{{ getRemainingTimeClass(borrow) }}">
+                                                {{ formatRemainingTime(borrow) }}
+                                            </span>
+                                            <span ng-if="getActualStatus(borrow) === 'returned'" class="text-success">
+                                                <i class="fas fa-check-circle"></i> Selesai
+                                            </span>
+                                            <span ng-if="getActualStatus(borrow) === 'late_return'" class="text-dark">
+                                                <i class="fas fa-clock"></i> Terlambat
+                                            </span>
+                                            <span ng-if="getActualStatus(borrow) === 'pending'" class="text-muted">
+                                                <i class="fas fa-hourglass-half"></i> Menunggu
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button ng-if="shouldShowReturnButton(borrow)" 
+                                                    class="btn btn-sm btn-success" 
+                                                    ng-click="returnBook(borrow)"
+                                                    ng-disabled="returning">
+                                                <i class="fas fa-undo"></i> 
+                                                <span ng-if="!returning">Kembalikan</span>
+                                                <span ng-if="returning">Proses...</span>
+                                            </button>
+                                            
+                                            <span ng-if="getActualStatus(borrow) === 'returned'" class="text-success">
+                                                <i class="fas fa-check-circle"></i> Sudah dikembalikan
+                                            </span>
+                                            
+                                            <span ng-if="getActualStatus(borrow) === 'late_return'" class="text-dark">
+                                                <i class="fas fa-check-circle"></i> Dikembalikan terlambat
+                                            </span>
+                                            
+                                            <span ng-if="getActualStatus(borrow) === 'pending'" class="text-warning">
+                                                <i class="fas fa-hourglass-half"></i> Menunggu persetujuan
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr ng-if="borrows.length === 0">
+                                        <td colspan="8" class="text-center text-muted">
+                                            <i class="fas fa-inbox"></i><br>
+                                            Belum ada data peminjaman
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="card" ng-if="totalItems > perPage">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="text-muted">
+                                    Menampilkan {{ (currentPage - 1) * perPage + 1 }} - 
+                                    {{ Math.min(currentPage * perPage, totalItems) }} dari {{ totalItems }} data
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <nav aria-label="Pagination">
+                                    <ul class="pagination justify-content-end">
+                                        <li class="page-item" ng-class="{'disabled': currentPage === 1}">
+                                            <a class="page-link" href="javascript:void(0);" ng-click="currentPage = 1; pageChanged()">
+                                                <i class="fas fa-angle-double-left"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item" ng-class="{'disabled': currentPage === 1}">
+                                            <a class="page-link" href="javascript:void(0);" ng-click="currentPage = currentPage - 1; pageChanged()">
+                                                <i class="fas fa-angle-left"></i>
+                                            </a>
+                                        </li>
+                                        
+                                        <li class="page-item active" ng-if="Math.ceil(totalItems / perPage) <= 5">
+                                            <span class="page-link">{{ currentPage }} / {{ Math.ceil(totalItems / perPage) }}</span>
+                                        </li>
+                                        
+                                        <li class="page-item" ng-class="{'disabled': currentPage === Math.ceil(totalItems / perPage)}">
+                                            <a class="page-link" href="javascript:void(0);" ng-click="currentPage = currentPage + 1; pageChanged()">
+                                                <i class="fas fa-angle-right"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item" ng-class="{'disabled': currentPage === Math.ceil(totalItems / perPage)}">
+                                            <a class="page-link" href="javascript:void(0);" ng-click="currentPage = Math.ceil(totalItems / perPage); pageChanged()">
+                                                <i class="fas fa-angle-double-right"></i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+    <style>
+        .badge-pending { background-color: #ffc107; color: #212529; }
+        .badge-borrowed { background-color: #17a2b8; color: white; }
+        .badge-returned { background-color: #28a745; color: white; }
+        .badge-overdue { background-color: #dc3545; color: white; }
+        .text-danger { color: #dc3545 !important; }
+        .text-warning { color: #ffc107 !important; }
+        .text-success { color: #28a745 !important; }
+    </style>
+</div>
