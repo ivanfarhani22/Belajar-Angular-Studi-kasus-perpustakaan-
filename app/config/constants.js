@@ -1,4 +1,3 @@
-// app/config/constants.js
 (function() {
     'use strict';
 

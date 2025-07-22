@@ -4,7 +4,7 @@
 
     angular.module('perpusApp', [
         'ngRoute',
-        'ngCookies'
+        'ngCookies',
     ])
     .run(appRun);
 

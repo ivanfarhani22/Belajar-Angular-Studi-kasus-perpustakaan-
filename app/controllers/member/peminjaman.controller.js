@@ -12,7 +12,7 @@ angular.module('perpusApp')
         
         // Pagination
         $scope.currentPage = 1;
-        $scope.perPage = 10;
+        $scope.perPage = 100;
         $scope.totalItems = 0;
         
         // Filter
@@ -117,131 +117,147 @@ angular.module('perpusApp')
             }, 100);
         };
 
-        // TAMBAHAN: Fungsi untuk mendapatkan tanggal batas pengembalian
-$scope.getDueDate = function(borrow) {
-    var dueDate = borrow.tanggal_kembali || 
-                  borrow.due_date || 
-                  borrow.return_date ||
-                  borrow.tanggal_pengembalian_target ||
-                  borrow.target_return_date;
-    
-    if (!dueDate) {
-        console.log('No due date found for ID:', borrow.id);
-        return null;
-    }
-    
-    return dueDate;
-};
+        // Fungsi untuk mendapatkan tanggal pinjam
+        $scope.getBorrowDate = function(borrow) {
+            try {
+                console.log('Getting borrow date for:', borrow.id, borrow);
+                
+                var borrowDate = borrow.tanggal_pinjam || 
+                                borrow.tanggal_peminjaman || 
+                                borrow.borrow_date || 
+                                borrow.created_at || 
+                                borrow.date_borrowed;
 
-// TAMBAHAN: Fungsi untuk menghitung sisa waktu dalam hari
-$scope.getRemainingTime = function(borrow) {
-    var dueDate = $scope.getDueDate(borrow);
-    if (!dueDate) return 0;
-    
-    var today = moment().startOf('day');
-    var due = moment(dueDate).startOf('day');
-    var remaining = due.diff(today, 'days');
-    
-    console.log('Remaining time for ID', borrow.id, ':', remaining, 'days');
-    return remaining;
-};
+                if (!borrowDate) {
+                    console.log('No borrow date found for ID:', borrow.id);
+                    return '-';
+                }
 
-// TAMBAHAN: Fungsi untuk format tampilan sisa waktu
-$scope.formatRemainingTime = function(borrow) {
-    var remaining = $scope.getRemainingTime(borrow);
-    
-    if (remaining > 0) {
-        return remaining + ' hari lagi';
-    } else if (remaining === 0) {
-        return 'Jatuh tempo hari ini';
-    } else {
-        var overdue = Math.abs(remaining);
-        return 'Terlambat ' + overdue + ' hari';
-    }
-};
+                // Check if moment is available
+                if (typeof moment !== 'undefined') {
+                    return moment(borrowDate).format('DD MMM YYYY');
+                } else {
+                    // Fallback if moment is not available
+                    var date = new Date(borrowDate);
+                    return date.toLocaleDateString('id-ID');
+                }
+            } catch(error) {
+                console.error('Error in getBorrowDate:', error);
+                return '-';
+            }
+        };
 
-// TAMBAHAN: Fungsi untuk mendapatkan class CSS berdasarkan sisa waktu
-$scope.getRemainingTimeClass = function(borrow) {
-    var remaining = $scope.getRemainingTime(borrow);
-    
-    if (remaining > 3) {
-        return 'text-success'; // Hijau - masih banyak waktu
-    } else if (remaining > 0) {
-        return 'text-warning'; // Kuning - hampir jatuh tempo
-    } else {
-        return 'text-danger'; // Merah - sudah terlambat
-    }
-};
-
-// TAMBAHAN: Fungsi untuk cek apakah buku sudah overdue
-$scope.isOverdue = function(borrow) {
-    var remaining = $scope.getRemainingTime(borrow);
-    return remaining < 0;
-};
+        // PERBAIKAN: Fungsi untuk mendapatkan tanggal kembali sesuai yang diatur member
+        $scope.getReturnDate = function(borrow) {
+            try {
+                console.log('Getting return date for:', borrow.id, borrow);
+                
+                // 1. PRIORITAS UTAMA: Cek apakah sudah dikembalikan (actual return date)
+                var actualReturnDate = borrow.tanggal_pengembalian || 
+                                      borrow.tanggal_pengembalian_actual || 
+                                      borrow.tanggal_kembali_aktual || 
+                                      borrow.actual_return_date ||
+                                      borrow.returned_at ||
+                                      borrow.date_returned;
+                
+                if (actualReturnDate) {
+                    console.log('Found actual return date:', actualReturnDate);
+                    // Check if moment is available
+                    if (typeof moment !== 'undefined') {
+                        return moment(actualReturnDate).format('DD MMM YYYY');
+                    } else {
+                        var date = new Date(actualReturnDate);
+                        return date.toLocaleDateString('id-ID');
+                    }
+                }
+                
+                // 2. PRIORITAS KEDUA: Tampilkan tanggal target yang SUDAH DIATUR MEMBER di BukuController
+                // Ini adalah tanggal yang member pilih saat meminjam buku
+                var memberSetReturnDate = borrow.tanggal_kembali || 
+                                         borrow.due_date || 
+                                         borrow.return_date ||
+                                         borrow.tanggal_pengembalian_target ||
+                                         borrow.target_return_date ||
+                                         borrow.expected_return_date ||
+                                         borrow.member_return_date;
+                
+                if (memberSetReturnDate) {
+                    console.log('Found member-set return date:', memberSetReturnDate);
+                    // Check if moment is available
+                    if (typeof moment !== 'undefined') {
+                        return moment(memberSetReturnDate).format('DD MMM YYYY');
+                    } else {
+                        var date = new Date(memberSetReturnDate);
+                        return date.toLocaleDateString('id-ID');
+                    }
+                }
+                
+                console.log('No return date found for ID:', borrow.id);
+                return 'Belum diatur';
+            } catch(error) {
+                console.error('Error in getReturnDate:', error);
+                return '-';
+            }
+        };
         
-        // PERBAIKAN: Fungsi untuk mendapatkan status yang disederhanakan
- $scope.getActualStatus = function(borrow) {
-    console.log('=== DEBUG STATUS UNTUK ID:', borrow.id, '===');
-    console.log('Raw status:', borrow.status);
-    console.log('Typeof status:', typeof borrow.status);
-    
-    // 1. Cek apakah sudah dikembalikan (paling penting)
-    if (borrow.tanggal_pengembalian_actual || 
-        borrow.tanggal_kembali_aktual || 
-        borrow.actual_return_date ||
-        borrow.returned_at) {
-        console.log('Result: returned (ada tanggal pengembalian aktual)');
-        return 'returned';
-    }
-    
-    // 2. Konversi status ke integer untuk memastikan
-    var status = parseInt(borrow.status);
-    console.log('Status after parseInt:', status);
-    
-    // 3. Handle berdasarkan status numerik
-    switch(status) {
-        case 1:
-            console.log('Result: pending (status = 1)');
-            return 'pending';
+        // Fungsi untuk mendapatkan status yang disederhanakan
+        $scope.getActualStatus = function(borrow) {
+            console.log('=== DEBUG STATUS UNTUK ID:', borrow.id, '===');
+            console.log('Raw status:', borrow.status);
+            console.log('Typeof status:', typeof borrow.status);
             
-        case 2:
-            // Status 2 = Dipinjam - Cek apakah overdue
-            if ($scope.isOverdue(borrow)) {
-                console.log('Result: overdue (status = 2, terlambat)');
-                return 'overdue';
-            } else {
-                console.log('Result: borrowed (status = 2)');
-                return 'borrowed';
+            // 1. Cek apakah sudah dikembalikan (paling penting)
+            if (borrow.tanggal_pengembalian_actual || 
+                borrow.tanggal_kembali_aktual || 
+                borrow.actual_return_date ||
+                borrow.returned_at) {
+                console.log('Result: returned (ada tanggal pengembalian aktual)');
+                return 'returned';
             }
             
-        case 3:
-            console.log('Result: returned (status = 3)');
-            return 'returned';
+            // 2. Konversi status ke integer untuk memastikan
+            var status = parseInt(borrow.status);
+            console.log('Status after parseInt:', status);
             
-        default:
-            console.log('Result: pending (default - status tidak dikenali:', status, ')');
-            return 'pending';
-    }
-};
+            // 3. Handle berdasarkan status numerik
+            switch(status) {
+                case 1:
+                    console.log('Result: pending (status = 1)');
+                    return 'pending';
+                    
+                case 2:
+                    console.log('Result: borrowed (status = 2)');
+                    return 'borrowed';
+                    
+                case 3:
+                    console.log('Result: returned (status = 3)');
+                    return 'returned';
+                    
+                default:
+                    console.log('Result: pending (default - status tidak dikenali:', status, ')');
+                    return 'pending';
+            }
+        };
 
-        // PERBAIKAN: Fungsi untuk cek apakah buku bisa dikembalikan
-     $scope.canReturnBook = function(borrow) {
-    var actualStatus = $scope.getActualStatus(borrow);
-    console.log('Can return book check - ID:', borrow.id, 'Status:', actualStatus);
-    
-    // Buku bisa dikembalikan jika statusnya 'borrowed' atau 'overdue'
-    return actualStatus === 'borrowed' || actualStatus === 'overdue';
-};
-        // PERBAIKAN: Fungsi untuk menampilkan tombol return
-$scope.shouldShowReturnButton = function(borrow) {
-    var actualStatus = $scope.getActualStatus(borrow);
-    console.log('shouldShowReturnButton - ID:', borrow.id, 'Status:', actualStatus);
-    
-    // Tampilkan tombol jika status borrowed atau overdue
-    return (actualStatus === 'borrowed' || actualStatus === 'overdue') && !$scope.returning;
-};
+        // Fungsi untuk cek apakah buku bisa dikembalikan
+        $scope.canReturnBook = function(borrow) {
+            var actualStatus = $scope.getActualStatus(borrow);
+            console.log('Can return book check - ID:', borrow.id, 'Status:', actualStatus);
+            
+            // Buku bisa dikembalikan jika statusnya 'borrowed'
+            return actualStatus === 'borrowed';
+        };
+
+        // Fungsi untuk menampilkan tombol return
+        $scope.shouldShowReturnButton = function(borrow) {
+            var actualStatus = $scope.getActualStatus(borrow);
+            console.log('shouldShowReturnButton - ID:', borrow.id, 'Status:', actualStatus);
+            
+            // Tampilkan tombol jika status borrowed
+            return actualStatus === 'borrowed' && !$scope.returning;
+        };
         
-        // PERBAIKAN: Return book function
+        // Return book function
         $scope.returnBook = function(borrow) {
             if (!$scope.canReturnBook(borrow)) {
                 $scope.error = 'Buku ini tidak dapat dikembalikan saat ini';
@@ -277,141 +293,29 @@ $scope.shouldShowReturnButton = function(borrow) {
                 });
         };
         
-        // PERBAIKAN: Fungsi untuk meminjam buku
-        $scope.borrowBook = function(bukuId) {
-            if (!bukuId) {
-                $scope.error = 'ID buku tidak valid';
-                return;
-            }
-            
-            $scope.loading = true;
-            $scope.error = '';
-            $scope.success = '';
-            
-            console.log('Borrowing book with ID:', bukuId);
-            
-            BorrowService.borrowBookAuto(bukuId)
-                .then(function(response) {
-                    $scope.loading = false;
-                    console.log('Borrow book response:', response);
-                    
-                    if (response.success) {
-                        $scope.success = 'Permintaan peminjaman berhasil dikirim';
-                        $scope.loadBorrows(); // Reload data
-                    } else {
-                        $scope.error = response.message || 'Gagal meminjam buku';
-                    }
-                })
-                .catch(function(error) {
-                    $scope.loading = false;
-                    console.error('Error borrowing book:', error);
-                    $scope.error = error.message || 'Gagal meminjam buku';
+        // DIHAPUS: Fungsi borrowBook - tidak diperlukan di peminjaman controller
+        // karena peminjaman dilakukan di buku controller
+        
+        // DEBUG: Fungsi untuk log semua data borrow
+        $scope.debugAllBorrows = function() {
+            console.log('=== DEBUG ALL BORROWS ===');
+            angular.forEach($scope.borrows, function(borrow, index) {
+                console.log('Borrow', index, ':', {
+                    id: borrow.id,
+                    status: borrow.status,
+                    tanggal_pinjam: borrow.tanggal_pinjam,
+                    tanggal_peminjaman: borrow.tanggal_peminjaman,
+                    tanggal_kembali: borrow.tanggal_kembali,
+                    tanggal_pengembalian: borrow.tanggal_pengembalian,
+                    getBorrowDate: $scope.getBorrowDate(borrow),
+                    getReturnDate: $scope.getReturnDate(borrow),
+                    getActualStatus: $scope.getActualStatus(borrow)
                 });
-        };
-        
-        // PERBAIKAN: Fungsi untuk menghitung sisa hari (tetap ada untuk keperluan display)
-        $scope.getRemainingDays = function(returnDate) {
-            if (!returnDate) return 0;
-            
-            var remaining = moment(returnDate).diff(moment().startOf('day'), 'days');
-            console.log('Remaining days for date', returnDate, ':', remaining);
-            return remaining;
-        };
-        
-        // Get overdue days (tetap ada untuk keperluan display)
-        $scope.getOverdueDays = function(borrow) {
-            var returnDate = borrow.tanggal_pengembalian || borrow.tanggal_kembali || borrow.return_date;
-            if (!returnDate) return 0;
-            
-            var overdueDays = moment().diff(moment(returnDate), 'days');
-            return overdueDays > 0 ? overdueDays : 0;
+            });
+            console.log('=== END DEBUG ===');
         };
 
-        // PERBAIKAN BARU: Fungsi untuk mendapatkan tanggal pinjam
- $scope.getBorrowDate = function(borrow) {
-    var borrowDate = borrow.tanggal_peminjaman || // INI YANG UTAMA
-                    borrow.borrow_date || 
-                    borrow.created_at || 
-                    borrow.tanggal_pinjam || 
-                    borrow.date_borrowed;
-
-    if (!borrowDate) {
-        console.log('No borrow date found for ID:', borrow.id);
-        return null;
-    }
-
-    return borrowDate;
-};
-
-
-        // PERBAIKAN BARU: Fungsi untuk mendapatkan tanggal kembali aktual
-$scope.getActualReturnDate = function(borrow) {
-    var actualReturnDate = borrow.tanggal_pengembalian || // INI YANG UTAMA
-                          borrow.tanggal_pengembalian_actual || 
-                          borrow.tanggal_kembali_aktual || 
-                          borrow.actual_return_date ||
-                          borrow.returned_at ||
-                          borrow.date_returned;
-
-    if (!actualReturnDate) {
-        console.log('No actual return date found for ID:', borrow.id);
-        return null;
-    }
-
-    return actualReturnDate;
-};
-
-
-        // PERBAIKAN BARU: Fungsi untuk mendapatkan tanggal yang akan ditampilkan berdasarkan status
-        $scope.getDisplayDate = function(borrow) {
-            var status = $scope.getActualStatus(borrow);
-            
-            switch(status) {
-                case 'pending':
-                    // Untuk status pending, tampilkan tanggal permintaan
-                    var requestDate = $scope.getBorrowDate(borrow);
-                    return requestDate ? requestDate : null;
-                    
-                case 'borrowed':
-                    // Untuk status dipinjam (status 2), tampilkan tanggal pinjam
-                    var borrowDate = $scope.getBorrowDate(borrow);
-                    return borrowDate ? borrowDate : null;
-                    
-                case 'returned':
-                    // Untuk status sudah dikembalikan (status 3), tampilkan tanggal kembali aktual
-                    var returnDate = $scope.getActualReturnDate(borrow);
-                    return returnDate ? returnDate : null;
-                    
-                default:
-                    return null;
-            }
-        };
-
-        // PERBAIKAN BARU: Fungsi untuk mendapatkan label tanggal berdasarkan status
-        $scope.getDateLabel = function(borrow) {
-            var status = $scope.getActualStatus(borrow);
-            
-            switch(status) {
-                case 'pending':
-                    return 'Tanggal Permintaan';
-                case 'borrowed':
-                    return 'Tanggal Pinjam';
-                case 'returned':
-                    return 'Tanggal Kembali';
-                default:
-                    return 'Tanggal';
-            }
-        };
-
-        // PERBAIKAN BARU: Fungsi untuk format tanggal yang ditampilkan
-        $scope.formatDisplayDate = function(borrow) {
-            var displayDate = $scope.getDisplayDate(borrow);
-            if (!displayDate) return '-';
-            
-            return moment(displayDate).format('DD MMM YYYY');
-        };
-        
-        // TEMPORARY: Fungsi untuk menampilkan semua data borrow untuk debugging
+        // DEBUG: Fungsi untuk menampilkan semua data borrow untuk debugging
         $scope.debugBorrow = function(borrow) {
             console.log('=== FULL BORROW DATA ===');
             console.log('ID:', borrow.id);
@@ -421,17 +325,21 @@ $scope.getActualReturnDate = function(borrow) {
             console.log('Borrow date:', borrow.borrow_date);
             console.log('Created at:', borrow.created_at);
             console.log('Date borrowed:', borrow.date_borrowed);
-            console.log('Tanggal kembali:', borrow.tanggal_kembali);
+            console.log('Tanggal kembali (member set):', borrow.tanggal_kembali);
             console.log('Return date:', borrow.return_date);
-            console.log('Tanggal pengembalian:', borrow.tanggal_pengembalian);
+            console.log('Due date:', borrow.due_date);
+            console.log('Target return date:', borrow.target_return_date);
+            console.log('Expected return date:', borrow.expected_return_date);
+            console.log('Member return date:', borrow.member_return_date);
+            console.log('Tanggal pengembalian (actual):', borrow.tanggal_pengembalian);
             console.log('Tanggal kembali aktual:', borrow.tanggal_kembali_aktual);
             console.log('Actual return date:', borrow.actual_return_date);
             console.log('Returned at:', borrow.returned_at);
             console.log('Tanggal pengembalian actual:', borrow.tanggal_pengembalian_actual);
             console.log('Date returned:', borrow.date_returned);
             console.log('Computed status:', $scope.getActualStatus(borrow));
-            console.log('Display date:', $scope.getDisplayDate(borrow));
-            console.log('Date label:', $scope.getDateLabel(borrow));
+            console.log('Get borrow date:', $scope.getBorrowDate(borrow));
+            console.log('Get return date:', $scope.getReturnDate(borrow));
             console.log('=== END DEBUG ===');
         };
         
@@ -456,39 +364,36 @@ $scope.getActualReturnDate = function(borrow) {
             return moment(date).format('DD MMM YYYY');
         };
         
-        // PERBAIKAN: Get status class - disederhanakan
-$scope.getStatusClass = function(borrow) {
-    var status = $scope.getActualStatus(borrow);
-    switch(status) {
-        case 'pending':
-            return 'badge-warning';
-        case 'borrowed':
-            return 'badge-info';
-        case 'overdue':
-            return 'badge-danger';
-        case 'returned':
-            return 'badge-success';
-        default:
-            return 'badge-secondary';
-    }
-};
+        // Get status class - disederhanakan
+        $scope.getStatusClass = function(borrow) {
+            var status = $scope.getActualStatus(borrow);
+            switch(status) {
+                case 'pending':
+                    return 'badge-warning';
+                case 'borrowed':
+                    return 'badge-info';
+                case 'returned':
+                    return 'badge-success';
+                default:
+                    return 'badge-secondary';
+            }
+        };
 
-// PERBAIKAN: Update fungsi getStatusText untuk menangani overdue
-$scope.getStatusText = function(borrow) {
-    var status = $scope.getActualStatus(borrow);
-    switch(status) {
-        case 'pending':
-            return 'Menunggu Persetujuan';
-        case 'borrowed':
-            return 'Dipinjam';
-        case 'overdue':
-            return 'Terlambat';
-        case 'returned':
-            return 'Sudah Dikembalikan';
-        default:
-            return 'Status Tidak Diketahui';
-    }
-};
+        // Update fungsi getStatusText
+        $scope.getStatusText = function(borrow) {
+            var status = $scope.getActualStatus(borrow);
+            switch(status) {
+                case 'pending':
+                    return 'Menunggu Persetujuan';
+                case 'borrowed':
+                    return 'Dipinjam';
+                case 'returned':
+                    return 'Sudah Dikembalikan';
+                default:
+                    return 'Status Tidak Diketahui';
+            }
+        };
+        
         // Get book title safely
         $scope.getBookTitle = function(borrow) {
             if (borrow.book && borrow.book.judul) {

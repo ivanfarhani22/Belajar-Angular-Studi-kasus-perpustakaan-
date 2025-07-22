@@ -1,4 +1,3 @@
-// app/config/routes.js
 (function() {
     'use strict';
 

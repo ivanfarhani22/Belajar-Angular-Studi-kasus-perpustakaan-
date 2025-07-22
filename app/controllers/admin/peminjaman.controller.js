@@ -117,79 +117,100 @@
         }
 
         // ===== DATATABLE MANAGEMENT =====
-
-        function initializeBorrowingsDataTable(memberId = null) {
-            destroyDataTable('#borrowingsTable');
-            abortCurrentRequest();
-            clearSavedPageInfo();
-            
-            try {
-                vm.borrowingsDataTable = $('#borrowingsTable').DataTable({
-                    processing: true,
-                    serverSide: true,
-                    responsive: true,
-                    autoWidth: false,
-                    deferRender: true,
-                    cache: false,
-                    ajax: createBorrowingsAjaxConfig(memberId),
-                    columns: getBorrowingsColumns(),
-                    order: [[3, 'desc']],
-                    language: getDataTableLanguage('peminjaman'),
-                    pageLength: 10,
-                    lengthMenu: [[10, 13, 25, 50], [10, 13, 25, 50]],
-                    drawCallback: function(settings) {
-                        if (vm.borrowingsDataTable && !vm.isRefreshing) {
-                            const pageInfo = vm.borrowingsDataTable.page.info();
-                            vm.currentPage = pageInfo.page;
-                        }
-                    },
-                    initComplete: function(settings, json) {
-                        vm.isRefreshing = false;
-                    },
-                    error: function(xhr, error, thrown) {
-                        showError('Gagal memuat tabel data');
-                        vm.isRefreshing = false;
-                    }
+function initializeBorrowingsDataTable(memberId = null) {
+    destroyDataTable('#borrowingsTable');
+    abortCurrentRequest();
+    clearSavedPageInfo();
+    
+    try {
+        vm.borrowingsDataTable = $('#borrowingsTable').DataTable({
+            processing: true,
+            serverSide: true,
+            responsive: true,
+            autoWidth: false,
+            deferRender: true,
+            cache: false,
+            ajax: createBorrowingsAjaxConfig(memberId),
+            columns: getBorrowingsColumns(),
+            order: [[4, 'desc']], // Updated order index (was 3, now 4 because of new No column)
+            language: getDataTableLanguage('peminjaman'),
+            pageLength: 10,
+            lengthMenu: [[10, 13, 25, 50], [10, 13, 25, 50]],
+            drawCallback: function(settings) {
+                // Update row numbers when table is redrawn
+                const api = this.api();
+                const pageInfo = api.page.info();
+                
+                // Update row numbers for current page
+                api.column(0, {page: 'current'}).nodes().each(function(cell, i) {
+                    cell.innerHTML = pageInfo.start + i + 1;
                 });
                 
-            } catch (error) {
-                showError('Gagal menginisialisasi tabel data');
+                if (vm.borrowingsDataTable && !vm.isRefreshing) {
+                    vm.currentPage = pageInfo.page;
+                }
+            },
+            initComplete: function(settings, json) {
+                vm.isRefreshing = false;
+            },
+            error: function(xhr, error, thrown) {
+                showError('Gagal memuat tabel data');
                 vm.isRefreshing = false;
             }
-        }
+        });
+        
+    } catch (error) {
+        showError('Gagal menginisialisasi tabel data');
+        vm.isRefreshing = false;
+    }
+}
 
-        function getBorrowingsColumns() {
-            return [
-                { data: 'member_name', name: 'member_name', title: 'Nama Member' },
-                { data: 'book_title', name: 'book_title', title: 'Judul Buku' },
-                { data: 'book_pengarang', name: 'book_pengarang', title: 'Pengarang' },
-                { 
-                    data: 'borrow_date', 
-                    name: 'borrow_date', 
-                    title: 'Tanggal Pinjam',
-                    render: data => data ? new Date(data).toLocaleDateString('id-ID') : '-'
-                },
-                { 
-                    data: 'due_date', 
-                    name: 'due_date', 
-                    title: 'Tanggal Kembali',
-                    render: data => data ? new Date(data).toLocaleDateString('id-ID') : '-'
-                },
-                { 
-                    data: 'status', 
-                    name: 'status', 
-                    title: 'Status',
-                    render: renderStatusBadge
-                },
-                {
-                    data: null,
-                    orderable: false,
-                    searchable: false,
-                    title: 'Aksi',
-                    render: renderActionButtons
-                }
-            ];
+function getBorrowingsColumns() {
+    return [
+        { 
+            data: null,
+            name: 'row_number',
+            title: 'No',
+            orderable: false,
+            searchable: false,
+            width: '50px',
+            className: 'text-center',
+            render: function (data, type, row, meta) {
+                // Calculate row number based on current page and row index
+                const pageInfo = vm.borrowingsDataTable ? vm.borrowingsDataTable.page.info() : { start: 0 };
+                return pageInfo.start + meta.row + 1;
+            }
+        },
+        { data: 'member_name', name: 'member_name', title: 'Nama Member' },
+        { data: 'book_title', name: 'book_title', title: 'Judul Buku' },
+        { data: 'book_pengarang', name: 'book_pengarang', title: 'Pengarang' },
+        { 
+            data: 'borrow_date', 
+            name: 'borrow_date', 
+            title: 'Tanggal Pinjam',
+            render: data => data ? new Date(data).toLocaleDateString('id-ID') : '-'
+        },
+        { 
+            data: 'due_date', 
+            name: 'due_date', 
+            title: 'Tanggal Kembali',
+            render: data => data ? new Date(data).toLocaleDateString('id-ID') : '-'
+        },
+        { 
+            data: 'status', 
+            name: 'status', 
+            title: 'Status',
+            render: renderStatusBadge
+        },
+        {
+            data: null,
+            orderable: false,
+            searchable: false,
+            title: 'Aksi',
+            render: renderActionButtons
         }
+    ];
+}
 
         function renderStatusBadge(data, type, row) {
             const statusConfig = {

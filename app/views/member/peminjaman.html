@@ -26,7 +26,7 @@
     <!-- Main Sidebar -->
     <aside class="main-sidebar sidebar-dark-primary elevation-4">
         <a href="#/member/dashboard" class="brand-link">
-            <img src="https://via.placeholder.com/33x33/007bff/ffffff?text=P" class="brand-image img-circle elevation-3">
+            <img src="../../favicon.ico" class="brand-image img-circle elevation-3">
             <span class="brand-text font-weight-light">Perpustakaan</span>
         </a>
 
@@ -104,9 +104,9 @@
                                         <th>Judul Buku</th>
                                         <th>Kode Buku</th>
                                         <th>Pengarang</th>
-                                        <th>Tanggal</th>
+                                        <th>Tanggal Pinjam</th>
+                                        <th>Tanggal Kembali</th>
                                         <th>Status</th>
-                                        <th>Sisa Waktu</th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
@@ -117,27 +117,20 @@
                                         <td>{{ getBookCode(borrow) }}</td>
                                         <td>{{ getBookAuthor(borrow) }}</td>
                                         <td>
-                                            <small class="text-muted">{{ getDateLabel(borrow) }}:</small><br>
-                                            {{ getDisplayDate(borrow) }}
+                                            <small class="text-muted">Dipinjam:</small><br>
+                                            {{ getBorrowDate(borrow) || '-' }}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                <span ng-if="getActualStatus(borrow) === 'returned' || getActualStatus(borrow) === 'late_return'">Dikembalikan:</span>
+                                                <span ng-if="getActualStatus(borrow) === 'borrowed' || getActualStatus(borrow) === 'overdue'">Target:</span>
+                                                <span ng-if="getActualStatus(borrow) === 'pending'">Rencana:</span>
+                                            </small><br>
+                                            {{ getReturnDate(borrow) || '-' }}
                                         </td>
                                         <td>
                                             <span class="badge {{ getStatusClass(borrow) }}">
                                                 {{ getStatusText(borrow) }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span ng-if="getActualStatus(borrow) === 'borrowed' || getActualStatus(borrow) === 'overdue'" 
-                                                class="{{ getRemainingTimeClass(borrow) }}">
-                                                {{ formatRemainingTime(borrow) }}
-                                            </span>
-                                            <span ng-if="getActualStatus(borrow) === 'returned'" class="text-success">
-                                                <i class="fas fa-check-circle"></i> Selesai
-                                            </span>
-                                            <span ng-if="getActualStatus(borrow) === 'late_return'" class="text-dark">
-                                                <i class="fas fa-clock"></i> Terlambat
-                                            </span>
-                                            <span ng-if="getActualStatus(borrow) === 'pending'" class="text-muted">
-                                                <i class="fas fa-hourglass-half"></i> Menunggu
                                             </span>
                                         </td>
                                         <td>
@@ -225,13 +218,12 @@
     </div>
 </div>
 
-    <style>
-        .badge-pending { background-color: #ffc107; color: #212529; }
-        .badge-borrowed { background-color: #17a2b8; color: white; }
-        .badge-returned { background-color: #28a745; color: white; }
-        .badge-overdue { background-color: #dc3545; color: white; }
-        .text-danger { color: #dc3545 !important; }
-        .text-warning { color: #ffc107 !important; }
-        .text-success { color: #28a745 !important; }
-    </style>
-</div>
+<style>
+    .badge-pending { background-color: #ffc107; color: #212529; }
+    .badge-borrowed { background-color: #17a2b8; color: white; }
+    .badge-returned { background-color: #28a745; color: white; }
+    .badge-overdue { background-color: #dc3545; color: white; }
+    .text-danger { color: #dc3545 !important; }
+    .text-warning { color: #ffc107 !important; }
+    .text-success { color: #28a745 !important; }
+</style>

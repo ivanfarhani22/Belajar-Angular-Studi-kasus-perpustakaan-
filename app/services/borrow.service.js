@@ -20,8 +20,6 @@
             borrowBookAuto: borrowBookAuto,
             acceptBorrow: acceptBorrow,
             returnBook: returnBook,
-            rejectBorrow: rejectBorrow,
-            updateBorrowStatus: updateBorrowStatus,
             
             // Helper functions
             searchBorrows: searchBorrows,
@@ -56,7 +54,7 @@
                     
                     var responseData = response.data;
                     
-                    // Handle response structure: { status: 200, message: "...", data: { peminjaman: { current_page: 1, data: [...] } } }
+                    // Handle response structure berdasarkan backend Laravel response format
                     var peminjamanData = responseData.data?.peminjaman || responseData.peminjaman || {};
                     var borrowData = peminjamanData.data || [];
                     
@@ -126,17 +124,9 @@
                 member_id: memberId
             };
             
-            if (status) {
-                filters.status = status;
-            }
-            
-            if (dateStart) {
-                filters.date_start = dateStart;
-            }
-            
-            if (dateEnd) {
-                filters.date_end = dateEnd;
-            }
+            if (status) filters.status = status;
+            if (dateStart) filters.date_start = dateStart;
+            if (dateEnd) filters.date_end = dateEnd;
             
             return getAllBorrows(page, perPage, filters);
         }
@@ -205,7 +195,7 @@
                     
                     return {
                         success: true,
-                        data: responseData.data || responseData.peminjaman || {},
+                        data: responseData.data?.book || responseData.book || {},
                         message: responseData.message || 'Data berhasil diambil'
                     };
                 })
@@ -283,7 +273,7 @@
                 borrowData: data
             });
             
-            // Tambahkan validasi data
+            // Validasi data
             if (!bukuId) {
                 console.error('BorrowService: ID buku harus diisi');
                 return Promise.reject({
@@ -309,8 +299,8 @@
                     return {
                         success: true,
                         data: {
-                            peminjaman: responseData.peminjaman || responseData.data?.peminjaman || {},
-                            book: responseData.book || responseData.data?.book || {}
+                            peminjaman: responseData.data?.peminjaman || responseData.peminjaman || {},
+                            book: responseData.data?.book || responseData.book || {}
                         },
                         message: responseData.message || 'Peminjaman berhasil'
                     };
@@ -323,6 +313,103 @@
                         error: error
                     };
                 });
+        }
+
+        // Fungsi alternatif untuk borrowBook tanpa perlu memberId (otomatis ambil dari session)
+        function borrowBookAuto(bukuId, borrowData) {
+            var memberId = getCurrentMemberId();
+            console.log('borrowBookAuto called with bukuId:', bukuId, 'found memberId:', memberId);
+            
+            if (!memberId) {
+                return Promise.reject({
+                    success: false,
+                    message: 'ID member tidak ditemukan. Pastikan Anda sudah login.'
+                });
+            }
+            
+            return borrowBook(bukuId, memberId, borrowData);
+        }
+
+        // FIXED: GET /peminjaman/{id}/accept - setujui peminjaman
+        function acceptBorrow(borrowId) {
+            if (!borrowId) {
+                return Promise.reject({
+                    success: false,
+                    message: 'ID peminjaman harus diisi'
+                });
+            }
+            
+            console.log('acceptBorrow called with borrowId:', borrowId);
+            
+            // PERBAIKAN: Sesuaikan dengan endpoint backend yang benar
+            return ApiService.get('/peminjaman/' + borrowId + '/accept')
+                .then(function(response) {
+                    console.log('DEBUG acceptBorrow response:', response);
+                    
+                    var responseData = response.data;
+                    
+                    return {
+                        success: true,
+                        data: responseData.data?.peminjaman || responseData.peminjaman || {},
+                        message: responseData.message || 'Peminjaman berhasil disetujui'
+                    };
+                })
+                .catch(function(error) {
+                    console.error('Error acceptBorrow:', error);
+                    return {
+                        success: false,
+                        message: error.data ? error.data.message : 'Gagal menyetujui peminjaman',
+                        error: error
+                    };
+                });
+        }
+
+        // POST /peminjaman/book/{id}/return - kembalikan buku
+        function returnBook(borrowId, returnData) {
+            var data = returnData || {};
+            
+            if (!borrowId) {
+                return Promise.reject({
+                    success: false,
+                    message: 'ID peminjaman harus diisi'
+                });
+            }
+            
+            return ApiService.post('/peminjaman/book/' + borrowId + '/return', data)
+                .then(function(response) {
+                    console.log('DEBUG returnBook response:', response);
+                    
+                    var responseData = response.data;
+                    
+                    return {
+                        success: true,
+                        data: {
+                            peminjaman: responseData.data?.peminjaman || responseData.peminjaman || {},
+                            buku: responseData.data?.buku || responseData.buku || {}
+                        },
+                        message: responseData.message || 'Buku berhasil dikembalikan'
+                    };
+                })
+                .catch(function(error) {
+                    console.error('Error returnBook:', error);
+                    return {
+                        success: false,
+                        message: error.data ? error.data.message : 'Gagal mengembalikan buku',
+                        error: error
+                    };
+                });
+        }
+
+        // Helper function untuk search peminjaman dengan filters
+        function searchBorrows(searchTerm, page, perPage, additionalFilters) {
+            var filters = { search: searchTerm };
+            
+            // Merge dengan filters tambahan jika ada
+            if (additionalFilters) {
+                angular.extend(filters, additionalFilters);
+            }
+            
+            return getAllBorrows(page, perPage, filters);
         }
 
         // Fungsi helper untuk mendapatkan member ID dari user yang sedang login
@@ -433,29 +520,6 @@
                 console.warn('Error parsing currentUser from sessionStorage:', e);
             }
             
-            // 6. Coba dari localStorage dengan key 'auth_token' atau 'token'
-            try {
-                var tokenStr = $window.localStorage.getItem('auth_token') || $window.localStorage.getItem('token');
-                console.log('localStorage token string:', tokenStr);
-                if (tokenStr && tokenStr !== 'undefined' && tokenStr !== 'null') {
-                    // Jika token dalam format JWT, coba decode
-                    var tokenParts = tokenStr.split('.');
-                    if (tokenParts.length === 3) {
-                        var payload = JSON.parse(atob(tokenParts[1]));
-                        console.log('JWT payload:', payload);
-                        if (payload && typeof payload === 'object') {
-                            memberId = payload.sub || payload.user_id || payload.id;
-                            if (memberId) {
-                                console.log('Found memberId from JWT token:', memberId);
-                                return memberId;
-                            }
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn('Error parsing token:', e);
-            }
-            
             console.warn('getCurrentMemberId: No member ID found in any storage');
             return null;
         }
@@ -490,171 +554,6 @@
             } catch (e) {
                 console.warn('Error clearing user data:', e);
             }
-        }
-
-        // Fungsi alternatif untuk borrowBook tanpa perlu memberId (otomatis ambil dari session)
-        function borrowBookAuto(bukuId, borrowData) {
-            var memberId = getCurrentMemberId();
-            console.log('borrowBookAuto called with bukuId:', bukuId, 'found memberId:', memberId);
-            
-            if (!memberId) {
-                return Promise.reject({
-                    success: false,
-                    message: 'ID member tidak ditemukan. Pastikan Anda sudah login.'
-                });
-            }
-            
-            return borrowBook(bukuId, memberId, borrowData);
-        }
-
- // Fixed acceptBorrow function in BorrowService
-function acceptBorrow(borrowId) {
-    if (!borrowId) {
-        return Promise.reject({
-            success: false,
-            message: 'ID peminjaman harus diisi'
-        });
-    }
-    
-    console.log('acceptBorrow called with borrowId:', borrowId);
-    
-    // CHANGE: Use POST instead of GET to match backend endpoint
-    return ApiService.get('/peminjaman/book/' + borrowId + '/accept', {})
-        .then(function(response) {
-            console.log('DEBUG acceptBorrow response:', response);
-            
-            var responseData = response.data;
-            
-            return {
-                success: true,
-                data: responseData.data || responseData.peminjaman || {},
-                message: responseData.message || 'Peminjaman berhasil disetujui'
-            };
-        })
-        .catch(function(error) {
-            console.error('Error acceptBorrow:', error);
-            return {
-                success: false,
-                message: error.data ? error.data.message : 'Gagal menyetujui peminjaman',
-                error: error
-            };
-        });
-}
-        // POST /peminjaman/book/{id}/return - kembalikan buku
-        function returnBook(borrowId, returnData) {
-            var data = returnData || {};
-            
-            if (!borrowId) {
-                return Promise.reject({
-                    success: false,
-                    message: 'ID peminjaman harus diisi'
-                });
-            }
-            
-            return ApiService.post('/peminjaman/book/' + borrowId + '/return', data)
-                .then(function(response) {
-                    console.log('DEBUG returnBook response:', response);
-                    
-                    var responseData = response.data;
-                    
-                    return {
-                        success: true,
-                        data: {
-                            peminjaman: responseData.peminjaman || responseData.data?.peminjaman || {},
-                            buku: responseData.buku || responseData.data?.buku || {}
-                        },
-                        message: responseData.message || 'Buku berhasil dikembalikan'
-                    };
-                })
-                .catch(function(error) {
-                    console.error('Error returnBook:', error);
-                    return {
-                        success: false,
-                        message: error.data ? error.data.message : 'Gagal mengembalikan buku',
-                        error: error
-                    };
-                });
-        }
-
-// Also fix the rejectBorrow function if it exists
-function rejectBorrow(borrowId) {
-    if (!borrowId) {
-        return Promise.reject({
-            success: false,
-            message: 'ID peminjaman harus diisi'
-        });
-    }
-    
-    console.log('rejectBorrow called with borrowId:', borrowId);
-    
-    // CHANGE: Use POST instead of GET and add empty data object
-    return ApiService.post('/peminjaman/book/' + borrowId + '/reject', {})
-        .then(function(response) {
-            console.log('DEBUG rejectBorrow response:', response);
-            
-            var responseData = response.data;
-            
-            return {
-                success: true,
-                data: responseData.data || responseData.peminjaman || {},
-                message: responseData.message || 'Peminjaman berhasil ditolak'
-            };
-        })
-        .catch(function(error) {
-            console.error('Error rejectBorrow:', error);
-            return {
-                success: false,
-                message: error.data ? error.data.message : 'Gagal menolak peminjaman',
-                error: error
-            };
-        });
-}
-
-
-        // Fungsi untuk mengupdate status peminjaman secara umum
-        function updateBorrowStatus(borrowId, statusCode, statusData) {
-            if (!borrowId) {
-                return Promise.reject({
-                    success: false,
-                    message: 'ID peminjaman harus diisi'
-                });
-            }
-            
-            var data = statusData || {};
-            data.status = statusCode;
-            
-            return ApiService.post('/peminjaman/book/' + borrowId + '/status', data)
-                .then(function(response) {
-                    console.log('DEBUG updateBorrowStatus response:', response);
-                    
-                    var responseData = response.data;
-                    
-                    return {
-                        success: true,
-                        data: responseData.data || responseData.peminjaman || {},
-                        message: responseData.message || 'Status peminjaman berhasil diupdate'
-                    };
-                })
-                .catch(function(error) {
-                    console.error('Error updateBorrowStatus:', error);
-                    return {
-                        success: false,
-                        message: error.data ? error.data.message : 'Gagal mengupdate status peminjaman',
-                        error: error
-                    };
-                });
-        }
-
-        // Helper function untuk search peminjaman dengan filters
-        function searchBorrows(searchTerm, page, perPage, additionalFilters) {
-            var filters = { search: searchTerm };
-            
-            // Merge dengan filters tambahan jika ada
-            if (additionalFilters) {
-                angular.extend(filters, additionalFilters);
-            }
-            
-            return getAllBorrows(page, perPage, filters);
         }
     }
 })();

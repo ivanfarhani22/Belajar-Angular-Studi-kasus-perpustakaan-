@@ -26,7 +26,7 @@
     <!-- Main Sidebar -->
     <aside class="main-sidebar sidebar-dark-primary elevation-4">
         <a href="#/admin/dashboard" class="brand-link">
-            <img src="assets/img/logo.png" alt="Logo" class="brand-image img-circle elevation-3">
+            <img src="../../../favicon.ico" class="brand-image img-circle elevation-3">
             <span class="brand-text font-weight-light">Perpustakaan</span>
         </a>
 
@@ -145,49 +145,51 @@
                     <div class="card-body">
                         <div class="table-responsive">
                             <table id="booksTable" class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Judul</th>
-                                        <th>Pengarang</th>
-                                        <th>Kategori</th>
-                                        <th>Penerbit</th>
-                                        <th>Tahun</th>
-                                        <th>Stok</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr ng-repeat="book in books" ng-if="!loading">
-                                        <td>
-                                            <a href="javascript:void(0);" ng-click="viewBookDetail(book.id)">
-                                                {{ book.judul || '-' }}
-                                            </a>
-                                        </td>
-                                        <td>{{ book.pengarang || '-' }}</td>
-                                        <td>{{ (book.category && book.category.nama_kategori) || getCategoryName(book.category_id) }}</td>
-                                        <td>{{ book.penerbit || '-' }}</td>
-                                        <td>{{ book.tahun || '-' }}</td>
-                                        <td>
-                                            <span class="badge" ng-class="book.stok > 0 ? 'badge-success' : 'badge-danger'">
-                                                {{ book.stok || 0 }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group">
-                                                <button class="btn btn-sm btn-info" ng-click="editBook(book.id)">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-danger" ng-click="confirmDelete(book.id)">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr ng-if="!loading && books.length == 0">
-                                        <td colspan="7" class="text-center">Tidak ada data buku</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+    <thead>
+        <tr>
+            <th>No</th>
+            <th>Judul</th>
+            <th>Pengarang</th>
+            <th>Kategori</th>
+            <th>Penerbit</th>
+            <th>Tahun</th>
+            <th>Stok</th>
+            <th>Aksi</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr ng-repeat="book in books track by book.id" ng-if="!loading">
+            <td>{{ $index + 1 }}</td>
+            <td>
+                <a href="javascript:void(0);" ng-click="viewBookDetail(book.id)">
+                    {{ book.judul || '-' }}
+                </a>
+            </td>
+            <td>{{ book.pengarang || '-' }}</td>
+            <td>{{ (book.category && book.category.nama_kategori) || getCategoryName(book.category_id) }}</td>
+            <td>{{ book.penerbit || '-' }}</td>
+            <td>{{ book.tahun || '-' }}</td>
+            <td>
+                <span class="badge" ng-class="book.stok > 0 ? 'badge-success' : 'badge-danger'">
+                    {{ book.stok || 0 }}
+                </span>
+            </td>
+            <td>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-info" ng-click="editBook(book.id)">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" ng-click="confirmDelete(book.id)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+        <tr ng-if="!loading && books.length == 0">
+            <td colspan="8" class="text-center">Tidak ada data buku</td>
+        </tr>
+    </tbody>
+</table>
                         </div>
                     </div>
                 </div>

@@ -279,8 +279,8 @@ angular.module('perpusApp').service('BookValidator', function() {
 });
 
 angular.module('perpusApp').service('BookService', [
-    '$http', 'API_CONFIG', 'HttpHelper', 'FileHelper', 'BookValidator',
-    function($http, API_CONFIG, HttpHelper, FileHelper, BookValidator) {
+    '$http', 'API_CONFIG', 'HttpHelper', 'FileHelper', 'BookValidator', 'AuthService',
+    function($http, API_CONFIG, HttpHelper, FileHelper, BookValidator, AuthService) {
         
         var self = this;
         
@@ -305,7 +305,6 @@ angular.module('perpusApp').service('BookService', [
             
             if (requestType === 'formdata') {
                 config.transformRequest = angular.identity;
-                config.headers['Content-Type'] = undefined;
             }
             
             return $http(config)
@@ -453,52 +452,36 @@ angular.module('perpusApp').service('BookService', [
             });
         };
 
+        // Fixed importExcel method
         self.importExcel = function(file) {
             if (!file) {
                 return Promise.resolve({ success: false, message: 'Excel file is required' });
             }
-            
-            var allowedTypes = [
-                'application/vnd.ms-excel',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'application/octet-stream'
-            ];
-            
-            var allowedExtensions = ['.xls', '.xlsx'];
-            var fileName = file.name.toLowerCase();
-            var hasValidExtension = allowedExtensions.some(function(ext) {
-                return fileName.endsWith(ext);
+
+            var formData = new FormData();
+            formData.append('file_import', file, file.name);
+
+            // Log untuk debugging
+            for (var pair of formData.entries()) {
+                console.log(pair[0] + ':', pair[1]);
+            }
+
+            return $http({
+                method: 'POST',
+                url: HttpHelper.buildUrl(API_CONFIG.ENDPOINTS.BOOKS.IMPORT),
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + AuthService.getToken(),
+                    'Accept': 'application/json',
+                    'Content-Type': undefined // Biarkan browser yang set boundary
+                },
+                transformRequest: angular.identity
+            }).then(function(response) {
+                return HttpHelper.handleResponse(response, 'Books imported successfully');
+            }).catch(function(error) {
+                console.error('Import error:', error);
+                return HttpHelper.handleError(error, 'Failed to import books');
             });
-            
-            if (!allowedTypes.includes(file.type) && !hasValidExtension) {
-                return Promise.resolve({
-                    success: false,
-                    message: 'Invalid file type. Please upload Excel file (.xls or .xlsx)'
-                });
-            }
-            
-            var maxSize = 10 * 1024 * 1024; // 10MB
-            if (file.size > maxSize) {
-                return Promise.resolve({
-                    success: false,
-                    message: 'File size too large. Maximum 10MB allowed'
-                });
-            }
-            
-            if (file.size === 0) {
-                return Promise.resolve({
-                    success: false,
-                    message: 'File is empty'
-                });
-            }
-            
-            return self.smartRequest(
-                'POST',
-                HttpHelper.buildUrl(API_CONFIG.ENDPOINTS.BOOKS.IMPORT),
-                { file_import: file },
-                'Books imported successfully',
-                'Failed to import books'
-            );
         };
 
         self.exportPDF = function() {

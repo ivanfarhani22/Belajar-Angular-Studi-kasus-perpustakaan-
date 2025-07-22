@@ -23,6 +23,24 @@ angular.module('perpusApp')
         $scope.showDetailModal = false;
         $scope.selectedBook = null;
         $scope.borrowing = false;
+        
+        // Duration selection (sesuai HTML)
+        $scope.selectedDuration = '';
+        $scope.borrowDurationInfo = '';
+
+        // Utility function untuk mendapatkan tanggal hari ini
+        $scope.getTodayString = function() {
+            return new Date();
+        };
+
+        // Utility function untuk menghitung tanggal pengembalian berdasarkan durasi
+        $scope.getReturnDateFromDuration = function() {
+            if (!$scope.selectedDuration) return null;
+            
+            var returnDate = new Date();
+            returnDate.setDate(returnDate.getDate() + parseInt($scope.selectedDuration));
+            return returnDate;
+        };
 
         // Load books with pagination and filtering
         $scope.loadBooks = function() {
@@ -32,38 +50,34 @@ angular.module('perpusApp')
             BookService.getAllBooks($scope.currentPage, $scope.perPage, $scope.search, $scope.selectedCategory)
                 .then(function(response) {
                     $scope.loading = false;
-                    console.log('Books API Response:', response); // Debug log
+                    console.log('Books API Response:', response);
                     
                     if (response.success || response.status === 200) {
                         // Handle different response structures
                         if (response.data && response.data.books) {
-                            // Structure: response.data.books.data
                             if (response.data.books.data) {
                                 $scope.books = response.data.books.data;
                                 $scope.totalItems = response.data.books.total || response.data.books.length;
                             } else {
-                                // Structure: response.data.books (array)
                                 $scope.books = response.data.books;
                                 $scope.totalItems = response.data.books.length;
                             }
                         } else if (response.data && Array.isArray(response.data)) {
-                            // Structure: response.data (direct array)
                             $scope.books = response.data;
                             $scope.totalItems = response.data.length;
                         } else {
-                            // Fallback to original structure
                             $scope.books = response.data || [];
                             $scope.totalItems = response.total || 0;
                         }
                         
-                        console.log('Books loaded:', $scope.books.length); // Debug log
+                        console.log('Books loaded:', $scope.books.length);
                     } else {
                         $scope.error = response.message || 'Failed to load books';
                     }
                 })
                 .catch(function(error) {
                     $scope.loading = false;
-                    console.error('Error loading books:', error); // Debug log
+                    console.error('Error loading books:', error);
                     $scope.error = error.data?.message || error.message || 'Failed to load books';
                 });
         };
@@ -72,10 +86,9 @@ angular.module('perpusApp')
         $scope.loadCategories = function() {
             CategoryService.getAllCategories()
                 .then(function(response) {
-                    console.log('Categories API Response:', response); // Debug log
+                    console.log('Categories API Response:', response);
                     
                     if (response.success || response.status === 200) {
-                        // Handle different response structures
                         if (response.data && response.data.categories) {
                             $scope.categories = response.data.categories;
                         } else if (response.data && Array.isArray(response.data)) {
@@ -84,26 +97,76 @@ angular.module('perpusApp')
                             $scope.categories = response.data || [];
                         }
                         
-                        console.log('Categories loaded:', $scope.categories.length); // Debug log
+                        console.log('Categories loaded:', $scope.categories.length);
                     }
                 })
                 .catch(function(error) {
-                    console.error('Error loading categories:', error); // Debug log
+                    console.error('Error loading categories:', error);
                 });
         };
         
-        // Show book detail
+        // Show book detail - reset duration selection
         $scope.showDetail = function(book) {
+            console.log('=== SHOW DETAIL DEBUG ===');
             $scope.selectedBook = book;
             $scope.showDetailModal = true;
-            $scope.clearAlert(); // Clear any previous alerts
+            $scope.clearAlert();
+
+            // Reset duration selection
+            $scope.selectedDuration = '';
+            $scope.borrowDurationInfo = '';
+            
+            console.log('Modal opened - duration reset to empty');
+            console.log('=== END SHOW DETAIL DEBUG ===');
         };
-        
-        // PERBAIKAN: Fungsi borrowBook yang diperbaiki
+
+        // Function yang dipanggil saat duration berubah (sesuai HTML: ng-change="onDurationChange()")
+        $scope.onDurationChange = function() {
+            console.log('=== DURATION CHANGE DEBUG ===');
+            console.log('Selected duration:', $scope.selectedDuration);
+            
+            if ($scope.selectedDuration && $scope.selectedDuration !== '') {
+                var days = parseInt($scope.selectedDuration);
+                
+                if (days === 1) {
+                    $scope.borrowDurationInfo = 'Peminjaman untuk 1 hari';
+                } else if (days === 7) {
+                    $scope.borrowDurationInfo = 'Peminjaman untuk 1 minggu (' + days + ' hari)';
+                } else if (days === 14) {
+                    $scope.borrowDurationInfo = 'Peminjaman untuk 2 minggu (' + days + ' hari)';
+                } else if (days === 21) {
+                    $scope.borrowDurationInfo = 'Peminjaman untuk 3 minggu (' + days + ' hari)';
+                } else if (days === 28) {
+                    $scope.borrowDurationInfo = 'Peminjaman untuk 4 minggu (' + days + ' hari)';
+                } else if (days === 30) {
+                    $scope.borrowDurationInfo = 'Peminjaman untuk 1 bulan (' + days + ' hari)';
+                } else {
+                    $scope.borrowDurationInfo = 'Peminjaman untuk ' + days + ' hari';
+                }
+                
+                $scope.error = ''; // Clear any previous errors
+            } else {
+                $scope.borrowDurationInfo = '';
+            }
+            
+            console.log('Duration info:', $scope.borrowDurationInfo);
+            console.log('=== END DURATION CHANGE DEBUG ===');
+        };
+
+        // Fungsi borrowBook sesuai dengan HTML
         $scope.borrowBook = function(bookId) {
+            console.log('=== BORROW BOOK DEBUG START ===');
+            console.log('Selected duration when borrowing:', $scope.selectedDuration);
+            
             // Validasi input
             if (!bookId) {
                 $scope.error = 'Book ID is required';
+                return;
+            }
+            
+            // Validasi durasi peminjaman WAJIB dipilih (sesuai HTML)
+            if (!$scope.selectedDuration || $scope.selectedDuration === '') {
+                $scope.error = 'Pilih durasi peminjaman terlebih dahulu sebelum meminjam buku';
                 return;
             }
             
@@ -138,62 +201,79 @@ angular.module('perpusApp')
             $scope.error = '';
             $scope.success = '';
             
-            console.log('Attempting to borrow book:', {
-                bookId: bookId,
-                userId: $scope.currentUser.id,
-                currentUser: $scope.currentUser,
-                selectedBook: $scope.selectedBook
+            var memberId = $scope.currentUser.id;
+            var days = parseInt($scope.selectedDuration);
+            
+            // Hitung tanggal pengembalian
+            var returnDate = new Date();
+            returnDate.setDate(returnDate.getDate() + days);
+            var returnDateString = returnDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+            
+            // Data yang dikirim ke API
+            var borrowData = {
+                tanggal_pengembalian: returnDateString,
+                durasi_hari: days
+            };
+            
+            console.log('Data akan dikirim ke API:');
+            console.log('- Book ID:', bookId);
+            console.log('- Member ID:', memberId);
+            console.log('- Duration (days):', days);
+            console.log('- Return Date:', returnDateString);
+            
+            // Kirim data ke API
+            BorrowService.borrowBook(bookId, memberId, borrowData)
+            .then(function(response) {
+                $scope.borrowing = false;
+                console.log('=== API SUCCESS RESPONSE ===');
+                console.log('Full API Response:', response);
+                
+                if (response.success || response.status === 201 || response.status === 200) {
+                    var successMessage = response.message || 'Buku berhasil dipinjam';
+                    successMessage += '. Durasi: ' + days + ' hari';
+                    successMessage += '. Tanggal pengembalian: ' + returnDate.toLocaleDateString('id-ID');
+                    
+                    $scope.success = successMessage;
+                    $scope.showDetailModal = false;
+                    $scope.selectedBook = null;
+                    $scope.selectedDuration = '';
+                    $scope.borrowDurationInfo = '';
+                    $scope.loadBooks();
+                    
+                    $timeout(function() {
+                        $scope.success = '';
+                    }, 5000);
+                } else {
+                    $scope.error = response.message || 'Failed to borrow book';
+                }
+            })
+            .catch(function(error) {
+                $scope.borrowing = false;
+                console.error('=== API ERROR ===');
+                console.error('Full error object:', error);
+                
+                var errorMessage = 'Failed to borrow book';
+                if (error.message) {
+                    errorMessage = error.message;
+                } else if (error.data && error.data.message) {
+                    errorMessage = error.data.message;
+                } else if (typeof error === 'string') {
+                    errorMessage = error;
+                }
+                
+                $scope.error = errorMessage;
             });
             
-            // PERBAIKAN: Gunakan borrowBook langsung dengan memberId dari currentUser
-            var memberId = $scope.currentUser.id;
-            console.log('Using memberId:', memberId);
-            
-            BorrowService.borrowBook(bookId, memberId)
-                .then(function(response) {
-                    $scope.borrowing = false;
-                    console.log('Borrow API Response:', response); // Debug log
-                    
-                    if (response.success) {
-                        $scope.success = response.message || 'Book borrowed successfully';
-                        $scope.showDetailModal = false;
-                        $scope.selectedBook = null;
-                        $scope.loadBooks(); // Refresh book list
-                        
-                        // Auto clear success message after 3 seconds
-                        $timeout(function() {
-                            $scope.success = '';
-                        }, 3000);
-                    } else {
-                        $scope.error = response.message || 'Failed to borrow book';
-                    }
-                })
-                .catch(function(error) {
-                    $scope.borrowing = false;
-                    console.error('Error borrowing book:', error); // Debug log
-                    
-                    // Handle different error structures
-                    var errorMessage = 'Failed to borrow book';
-                    if (error.message) {
-                        errorMessage = error.message;
-                    } else if (error.data && error.data.message) {
-                        errorMessage = error.data.message;
-                    } else if (typeof error === 'string') {
-                        errorMessage = error;
-                    }
-                    
-                    $scope.error = errorMessage;
-                });
+            console.log('=== BORROW BOOK DEBUG END ===');
         };
         
-        // PERBAIKAN: Fungsi validasi ketersediaan buku yang lebih robust
+        // Validasi ketersediaan buku
         $scope.isBookAvailable = function(book) {
             if (!book) {
                 console.log('Book is null or undefined');
                 return false;
             }
             
-            // Check various possible field names for stock
             var stock = book.stock || book.stok || book.available_stock || book.qty || 0;
             var isAvailable = stock > 0;
             
@@ -207,13 +287,12 @@ angular.module('perpusApp')
             return isAvailable;
         };
         
-        // PERBAIKAN: Fungsi validasi apakah user sudah meminjam buku
+        // Validasi apakah user sudah meminjam buku
         $scope.hasBookBorrowed = function(book) {
             if (!book) {
                 return false;
             }
             
-            // Check various possible field names for borrowed status
             var isBorrowed = book.borrowed_by_current_user === true || 
                            book.is_borrowed === true || 
                            book.is_borrowed_by_user === true ||
@@ -248,7 +327,7 @@ angular.module('perpusApp')
 
         // Filter functions
         $scope.applyFilter = function() {
-            $scope.currentPage = 1; // Reset to first page
+            $scope.currentPage = 1;
             $scope.loadBooks();
         };
         
@@ -287,12 +366,16 @@ angular.module('perpusApp')
             }
         };
         
-        // Modal functions
+        // Modal functions - reset duration selection
         $scope.closeModal = function() {
+            console.log('=== CLOSE MODAL DEBUG ===');
             $scope.showDetailModal = false;
             $scope.selectedBook = null;
+            $scope.selectedDuration = '';
+            $scope.borrowDurationInfo = '';
             $scope.error = '';
             $scope.success = '';
+            console.log('Modal closed and duration data reset');
         };
         
         // Clear alerts
@@ -301,38 +384,26 @@ angular.module('perpusApp')
             $scope.success = '';
         };
         
-        // PERBAIKAN: Fungsi untuk refresh current user
+        // Refresh current user
         $scope.refreshCurrentUser = function() {
             $scope.currentUser = AuthService.getCurrentUser();
             console.log('Current user refreshed:', $scope.currentUser);
-            
-            // Debug: Lihat semua data yang tersimpan di storage
-            console.log('=== DEBUG STORAGE ===');
-            console.log('localStorage currentUser:', localStorage.getItem('currentUser'));
-            console.log('localStorage user:', localStorage.getItem('user'));
-            console.log('localStorage authData:', localStorage.getItem('authData'));
-            console.log('localStorage auth_token:', localStorage.getItem('auth_token'));
-            console.log('localStorage token:', localStorage.getItem('token'));
-            console.log('sessionStorage user:', sessionStorage.getItem('user'));
-            console.log('sessionStorage currentUser:', sessionStorage.getItem('currentUser'));
-            console.log('=== END DEBUG STORAGE ===');
         };
         
-        // Watch for success message to auto-clear
+        // Auto-clear messages
         $scope.$watch('success', function(newValue) {
             if (newValue) {
                 $timeout(function() {
                     $scope.success = '';
-                }, 5000); // Increased to 5 seconds
+                }, 7000);
             }
         });
         
-        // Watch for error message to auto-clear after some time
         $scope.$watch('error', function(newValue) {
             if (newValue) {
                 $timeout(function() {
                     $scope.error = '';
-                }, 8000); // Auto clear error after 8 seconds
+                }, 10000);
             }
         });
         
@@ -341,19 +412,16 @@ angular.module('perpusApp')
             AuthService.logout();
         };
         
-        // PERBAIKAN: Initialize controller dengan validasi user
+        // Initialize controller
         $scope.init = function() {
-            // Refresh current user data
             $scope.refreshCurrentUser();
             
-            // Check if user is logged in
             if (!$scope.currentUser || !$scope.currentUser.id) {
                 console.warn('User not logged in or invalid user data');
                 $scope.error = 'Please log in to access this page';
                 return;
             }
             
-            // Load data
             $scope.loadCategories();
             $scope.loadBooks();
         };

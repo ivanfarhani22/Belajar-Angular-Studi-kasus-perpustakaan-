@@ -65,6 +65,16 @@
                 pagingType: 'full_numbers',
                 ajax: createMembersAjaxConfig(),
                 columns: [
+                    { 
+                        data: null,
+                        name: 'row_number',
+                        title: 'No',
+                        orderable: false,
+                        searchable: false,
+                        render: function (data, type, row, meta) {
+                            return meta.settings._iDisplayStart + meta.row + 1;
+                        }
+                    },
                     { data: 'name', name: 'name', title: 'Nama' },
                     { data: 'username', name: 'username', title: 'Username' },
                     { data: 'email', name: 'email', title: 'Email' },
@@ -75,7 +85,7 @@
                         render: data => data ? new Date(data).toLocaleDateString('id-ID') : '-'
                     },
                 ],
-                order: [[3, 'desc']],
+                order: [[4, 'desc']], // Updated index karena ada kolom No di index 0
                 language: getDataTableLanguage(),
                 pageLength: 7,
                 lengthMenu: [[7, 10, 25, 50], [7, 10, 25, 50]]

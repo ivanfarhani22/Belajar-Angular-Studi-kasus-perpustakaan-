@@ -3,28 +3,23 @@ angular.module('perpusApp')
     function($scope, $timeout, CategoryService, AuthService) {
         
         // ===== INITIALIZATION =====
-        const initializeController = () => {
+        const init = () => {
+            // User & data state
             $scope.currentUser = AuthService.getCurrentUser();
             $scope.categories = [];
-            $scope.pagination = {
-                current_page: 1,
-                last_page: 1,
-                total: 0,
-                from: 0,
-                to: 0
-            };
+            $scope.pagination = { current_page: 1, last_page: 1, total: 0, from: 0, to: 0 };
+            
+            // UI state
             $scope.loading = false;
             $scope.error = '';
             $scope.success = '';
-            
-            // Modal states
             $scope.showAddModal = false;
             $scope.showEditModal = false;
             $scope.showDeleteModal = false;
             $scope.categoryForm = {};
             $scope.categoryToDelete = null;
             
-            // Search functionality
+            // Search state
             $scope.searchQuery = '';
             $scope.isSearching = false;
             
@@ -34,37 +29,95 @@ angular.module('perpusApp')
             $scope.searchTimeout = null;
         };
         
-        // ===== MESSAGE HANDLING =====
+        // ===== MESSAGE HELPERS =====
         const autoHideMessage = () => {
-            if ($scope.clearMessageTimeout) {
-                $timeout.cancel($scope.clearMessageTimeout);
-            }
+            if ($scope.clearMessageTimeout) $timeout.cancel($scope.clearMessageTimeout);
             $scope.clearMessageTimeout = $timeout(() => {
-                $scope.error = '';
-                $scope.success = '';
+                $scope.error = $scope.success = '';
             }, 5000);
         };
         
-        const showSuccess = (message) => {
-            $scope.success = message;
-            $scope.error = '';
-            autoHideMessage();
-        };
-        
-        const showError = (message) => {
-            $scope.error = message;
-            $scope.success = '';
+        const showMessage = (type, message) => {
+            $scope[type] = message;
+            $scope[type === 'success' ? 'error' : 'success'] = '';
             autoHideMessage();
         };
         
         $scope.clearError = () => $scope.error = '';
         $scope.clearSuccess = () => $scope.success = '';
         
+        // ===== DATATABLE MANAGEMENT =====
+        const destroyDataTable = () => {
+            if ($scope.dataTable) {
+                try { $scope.dataTable.destroy(); $scope.dataTable = null; } 
+                catch (e) { console.error('DataTable destroy error:', e); }
+            }
+        };
+        
+        const initDataTable = () => {
+            $timeout(() => {
+                try {
+                    destroyDataTable();
+                    if ($('#categoriesTable').length && $scope.categories.length > 0) {
+                        $scope.dataTable = $('#categoriesTable').DataTable({
+                            responsive: true,
+                            autoWidth: false,
+                            paging: $scope.isSearching,
+                            pageLength: 10,
+                            info: $scope.isSearching,
+                            searching: false,
+                            language: {
+                                "emptyTable": "Tidak ada data kategori tersedia",
+                                "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                                "infoEmpty": "Menampilkan 0 sampai 0 dari 0 data",
+                                "infoFiltered": "(disaring dari _MAX_ total data)",
+                                "lengthMenu": "Tampilkan _MENU_ data",
+                                "loadingRecords": "Memuat...",
+                                "processing": "Memproses...",
+                                "search": "Cari:",
+                                "zeroRecords": "Tidak ada data yang sesuai ditemukan",
+                                "paginate": { "first": "Pertama", "last": "Terakhir", "next": "Selanjutnya", "previous": "Sebelumnya" }
+                            },
+                            order: [[0, 'asc']],
+                            columnDefs: [{ targets: -1, orderable: false, searchable: false }]
+                        });
+                    }
+                } catch (e) { console.error('DataTable init error:', e); }
+            }, 200);
+        };
+        
+        // ===== DATA OPERATIONS =====
+        const handleResponse = (response, successCallback, errorMsg) => {
+            $scope.loading = false;
+            if (response.success) {
+                successCallback(response);
+            } else {
+                $scope.categories = [];
+                showMessage('error', response.message || errorMsg);
+            }
+        };
+        
+        const updatePagination = (data) => {
+            $scope.pagination = {
+                current_page: data.current_page || 1,
+                last_page: data.last_page || 1,
+                total: data.total || 0,
+                from: data.from || 0,
+                to: data.to || 0
+            };
+        };
+        
+        const refreshCurrentView = () => {
+            if ($scope.isSearching) {
+                $scope.performSearch();
+            } else {
+                $scope.loadCategoriesPaginated($scope.pagination.current_page);
+            }
+        };
+        
         // ===== SEARCH FUNCTIONALITY =====
         $scope.performSearch = function() {
-            if ($scope.searchTimeout) {
-                $timeout.cancel($scope.searchTimeout);
-            }
+            if ($scope.searchTimeout) $timeout.cancel($scope.searchTimeout);
             
             $scope.searchTimeout = $timeout(() => {
                 const query = $scope.searchQuery?.trim();
@@ -79,47 +132,24 @@ angular.module('perpusApp')
                 $scope.isSearching = true;
                 
                 CategoryService.searchCategories(query)
-                    .then(response => {
-                        $scope.loading = false;
-                        
-                        if (response.success && response.data) {
-                            $scope.categories = response.data.data || [];
-                            $scope.pagination = {
-                                current_page: response.data.current_page || 1,
-                                last_page: response.data.last_page || 1,
-                                total: response.data.total || 0,
-                                from: response.data.from || 0,
-                                to: response.data.to || 0
-                            };
-                            
-                            initializeDataTable();
-                            
-                            if ($scope.categories.length === 0) {
-                                showError('Tidak ditemukan kategori dengan nama tersebut');
+                    .then(response => handleResponse(response, 
+                        (res) => {
+                            if (res.data?.data) {
+                                $scope.categories = res.data.data;
+                                updatePagination(res.data);
+                                initDataTable();
+                                if (!$scope.categories.length) {
+                                    showMessage('error', 'Tidak ditemukan kategori dengan nama tersebut');
+                                }
                             }
-                        } else {
-                            $scope.categories = [];
-                            $scope.pagination = {
-                                current_page: 1,
-                                last_page: 1,
-                                total: 0,
-                                from: 0,
-                                to: 0
-                            };
-                            showError('Tidak ditemukan kategori dengan nama tersebut');
-                        }
-                    })
-                    .catch(error => {
+                        }, 
+                        'Tidak ditemukan kategori dengan nama tersebut'
+                    ))
+                    .catch(() => {
                         $scope.loading = false;
                         $scope.categories = [];
-                        $scope.pagination = {
-                            current_page: 1,
-                            last_page: 1,
-                            total: 0,
-                            from: 0,
-                            to: 0
-                        };
-                        showError('Tidak ditemukan kategori dengan nama tersebut');
+                        $scope.pagination = { current_page: 1, last_page: 1, total: 0, from: 0, to: 0 };
+                        showMessage('error', 'Tidak ditemukan kategori dengan nama tersebut');
                     });
             }, 500);
         };
@@ -130,107 +160,35 @@ angular.module('perpusApp')
             $scope.loadCategoriesPaginated(1);
         };
         
-        // ===== DATATABLE FUNCTIONS =====
-        const getDataTableLanguage = () => ({
-            "emptyTable": "Tidak ada data kategori tersedia",
-            "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-            "infoEmpty": "Menampilkan 0 sampai 0 dari 0 data",
-            "infoFiltered": "(disaring dari _MAX_ total data)",
-            "lengthMenu": "Tampilkan _MENU_ data",
-            "loadingRecords": "Memuat...",
-            "processing": "Memproses...",
-            "search": "Cari:",
-            "zeroRecords": "Tidak ada data yang sesuai ditemukan",
-            "paginate": {
-                "first": "Pertama",
-                "last": "Terakhir",
-                "next": "Selanjutnya",
-                "previous": "Sebelumnya"
-            }
-        });
-        
-        const initializeDataTable = () => {
-            $timeout(() => {
-                try {
-                    destroyDataTable();
-                    
-                    if ($('#categoriesTable').length && $scope.categories.length > 0) {
-                        $scope.dataTable = $('#categoriesTable').DataTable({
-                            responsive: true,
-                            autoWidth: false,
-                            paging: $scope.isSearching ? true : false, // Enable paging for search results
-                            pageLength: 10, // Show 10 items per page in search
-                            info: $scope.isSearching ? true : false,
-                            searching: false, // We handle search manually
-                            language: getDataTableLanguage(),
-                            order: [[0, 'asc']],
-                            columnDefs: [{
-                                targets: -1,
-                                orderable: false,
-                                searchable: false
-                            }]
-                        });
-                    }
-                } catch (error) {
-                    console.error('Error initializing DataTable:', error);
-                }
-            }, 200);
-        };
-        
-        const destroyDataTable = () => {
-            if ($scope.dataTable) {
-                try {
-                    $scope.dataTable.destroy();
-                    $scope.dataTable = null;
-                } catch (error) {
-                    console.error('Error destroying DataTable:', error);
-                }
-            }
-        };
-        
         // ===== DATA LOADING =====
         $scope.loadCategoriesPaginated = function(page = 1) {
             $scope.loading = true;
             $scope.error = '';
             
             CategoryService.getPaginatedCategories(page)
-                .then(response => {
-                    $scope.loading = false;
-                    
-                    if (response.success) {
-                        const paginationData = response.data.categories || response.data;
-                        
-                        if (paginationData?.data && Array.isArray(paginationData.data)) {
-                            $scope.categories = paginationData.data;
-                            $scope.pagination = {
-                                current_page: paginationData.current_page || 1,
-                                last_page: paginationData.last_page || 1,
-                                total: paginationData.total || 0,
-                                from: paginationData.from || 0,
-                                to: paginationData.to || 0
-                            };
-                            
-                            initializeDataTable();
+                .then(response => handleResponse(response,
+                    (res) => {
+                        const data = res.data.categories || res.data;
+                        if (data?.data && Array.isArray(data.data)) {
+                            $scope.categories = data.data;
+                            updatePagination(data);
+                            initDataTable();
                         } else {
-                            $scope.categories = [];
-                            showError('Tidak ada data ditemukan');
+                            showMessage('error', 'Tidak ada data ditemukan');
                         }
-                    } else {
-                        $scope.categories = [];
-                        showError(response.message || 'Gagal memuat data kategori');
-                    }
-                })
+                    },
+                    'Gagal memuat data kategori'
+                ))
                 .catch(error => {
-                    console.error('Error loading categories:', error);
+                    console.error('Load categories error:', error);
                     $scope.loading = false;
                     $scope.categories = [];
-                    showError(error.message || 'Gagal memuat data kategori');
+                    showMessage('error', error.message || 'Gagal memuat data kategori');
                 });
         };
         
         // ===== PAGINATION =====
-        $scope.goToPage = function(page) {
-            // Only allow pagination when not searching
+        $scope.goToPage = (page) => {
             if (!$scope.isSearching && page >= 1 && page <= $scope.pagination.last_page && page !== $scope.pagination.current_page) {
                 $scope.loadCategoriesPaginated(page);
             }
@@ -248,199 +206,128 @@ angular.module('perpusApp')
             }
         };
         
-        // ===== MODAL FUNCTIONS =====
-        $scope.showAdd = function() {
+        // ===== MODAL MANAGEMENT =====
+        const resetModal = () => {
+            $scope.showAddModal = $scope.showEditModal = $scope.showDeleteModal = false;
             $scope.categoryForm = {};
+            $scope.categoryToDelete = null;
+            $scope.error = $scope.success = '';
+        };
+        
+        $scope.showAdd = function() {
+            resetModal();
             $scope.showAddModal = true;
-            $scope.error = '';
-            $scope.success = '';
-            
             $timeout(() => $('#nama_kategori').focus(), 100);
         };
         
         $scope.showEdit = function(category) {
-            if (!category) {
-                showError('Data kategori tidak valid');
-                return;
-            }
+            if (!category) return showMessage('error', 'Data kategori tidak valid');
             
-            $scope.categoryForm = {
-                id: category.id,
-                nama_kategori: category.nama_kategori
-            };
+            resetModal();
+            $scope.categoryForm = { id: category.id, nama_kategori: category.nama_kategori };
             $scope.showEditModal = true;
-            $scope.error = '';
-            $scope.success = '';
-            
             $timeout(() => $('#edit_nama_kategori').focus(), 100);
         };
         
         $scope.showDelete = function(category) {
-            if (!category) {
-                showError('Data kategori tidak valid');
-                return;
-            }
+            if (!category) return showMessage('error', 'Data kategori tidak valid');
             
-            $scope.categoryToDelete = {
-                id: category.id,
-                nama_kategori: category.nama_kategori
-            };
+            resetModal();
+            $scope.categoryToDelete = { id: category.id, nama_kategori: category.nama_kategori };
             $scope.showDeleteModal = true;
-            $scope.error = '';
-            $scope.success = '';
         };
         
-        $scope.closeModal = function() {
-            $scope.showAddModal = false;
-            $scope.showEditModal = false;
-            $scope.showDeleteModal = false;
-            $scope.categoryForm = {};
-            $scope.categoryToDelete = null;
-            $scope.error = '';
-            $scope.success = '';
-        };
+        $scope.closeModal = resetModal;
         
         // ===== FORM VALIDATION =====
-        const validateCategoryForm = () => {
+        const validateForm = () => {
             const name = $scope.categoryForm.nama_kategori?.trim();
             
-            if (!name) {
-                showError('Nama kategori harus diisi');
-                return false;
-            }
-            
-            if (name.length < 3) {
-                showError('Nama kategori minimal 3 karakter');
-                return false;
-            }
-            
-            if (name.length > 100) {
-                showError('Nama kategori maksimal 100 karakter');
-                return false;
-            }
+            if (!name) return showMessage('error', 'Nama kategori harus diisi'), false;
+            if (name.length < 3) return showMessage('error', 'Nama kategori minimal 3 karakter'), false;
+            if (name.length > 100) return showMessage('error', 'Nama kategori maksimal 100 karakter'), false;
             
             return true;
         };
         
         // ===== CRUD OPERATIONS =====
-        $scope.createCategory = function() {
-            if (!validateCategoryForm()) return;
+        const performCrudOperation = (operation, data, successMsg, errorMsg) => {
+            if (operation === 'update' && !$scope.categoryForm.id) {
+                return showMessage('error', 'ID kategori tidak valid');
+            }
+            if (operation === 'delete' && !$scope.categoryToDelete?.id) {
+                return showMessage('error', 'Data kategori tidak valid');
+            }
             
             $scope.loading = true;
             $scope.error = '';
             
-            const categoryData = {
-                nama_kategori: $scope.categoryForm.nama_kategori.trim()
-            };
+            let serviceCall;
+            switch(operation) {
+                case 'create': serviceCall = CategoryService.createCategory(data); break;
+                case 'update': serviceCall = CategoryService.updateCategory($scope.categoryForm.id, data); break;
+                case 'delete': serviceCall = CategoryService.deleteCategory($scope.categoryToDelete.id); break;
+            }
             
-            CategoryService.createCategory(categoryData)
-                .then(response => {
-                    $scope.loading = false;
+            serviceCall.then(response => {
+                $scope.loading = false;
+                if (response.success) {
+                    showMessage('success', response.message || successMsg);
+                    $scope.closeModal();
                     
-                    if (response.success) {
-                        showSuccess(response.message || 'Kategori berhasil ditambahkan');
-                        $scope.closeModal();
-                        
-                        // Refresh current view
+                    if (operation === 'create') {
+                        $scope.isSearching ? $scope.performSearch() : $scope.loadCategoriesPaginated(1);
+                    } else if (operation === 'delete') {
                         if ($scope.isSearching) {
                             $scope.performSearch();
                         } else {
-                            $scope.loadCategoriesPaginated(1);
+                            const currentPage = $scope.pagination.current_page;
+                            const shouldGoBack = $scope.categories.length === 1 && currentPage > 1;
+                            $scope.loadCategoriesPaginated(shouldGoBack ? currentPage - 1 : currentPage);
                         }
                     } else {
-                        showError(response.message || 'Gagal menambahkan kategori');
+                        refreshCurrentView();
                     }
-                })
-                .catch(error => {
-                    console.error('Error creating category:', error);
-                    $scope.loading = false;
-                    showError(error.message || 'Gagal menambahkan kategori');
-                });
+                } else {
+                    showMessage('error', response.message || errorMsg);
+                }
+            })
+            .catch(error => {
+                console.error(`${operation} error:`, error);
+                $scope.loading = false;
+                showMessage('error', error.message || errorMsg);
+            });
+        };
+        
+        $scope.createCategory = function() {
+            if (!validateForm()) return;
+            performCrudOperation('create', 
+                { nama_kategori: $scope.categoryForm.nama_kategori.trim() },
+                'Kategori berhasil ditambahkan',
+                'Gagal menambahkan kategori'
+            );
         };
         
         $scope.updateCategory = function() {
-            if (!validateCategoryForm() || !$scope.categoryForm.id) {
-                showError('ID kategori tidak valid');
-                return;
-            }
-            
-            $scope.loading = true;
-            $scope.error = '';
-            
-            const categoryData = {
-                nama_kategori: $scope.categoryForm.nama_kategori.trim()
-            };
-            
-            CategoryService.updateCategory($scope.categoryForm.id, categoryData)
-                .then(response => {
-                    $scope.loading = false;
-                    
-                    if (response.success) {
-                        showSuccess(response.message || 'Kategori berhasil diperbarui');
-                        $scope.closeModal();
-                        
-                        // Refresh current view
-                        if ($scope.isSearching) {
-                            $scope.performSearch();
-                        } else {
-                            $scope.loadCategoriesPaginated($scope.pagination.current_page);
-                        }
-                    } else {
-                        showError(response.message || 'Gagal memperbarui kategori');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error updating category:', error);
-                    $scope.loading = false;
-                    showError(error.message || 'Gagal memperbarui kategori');
-                });
+            if (!validateForm()) return;
+            performCrudOperation('update', 
+                { nama_kategori: $scope.categoryForm.nama_kategori.trim() },
+                'Kategori berhasil diperbarui',
+                'Gagal memperbarui kategori'
+            );
         };
         
         $scope.deleteCategory = function() {
-            if (!$scope.categoryToDelete?.id) {
-                showError('Data kategori tidak valid');
-                return;
-            }
-            
-            $scope.loading = true;
-            $scope.error = '';
-            
-            CategoryService.deleteCategory($scope.categoryToDelete.id)
-                .then(response => {
-                    $scope.loading = false;
-                    
-                    if (response.success) {
-                        showSuccess(response.message || 'Kategori berhasil dihapus');
-                        $scope.closeModal();
-                        
-                        // Refresh current view
-                        if ($scope.isSearching) {
-                            $scope.performSearch();
-                        } else {
-                            // Smart pagination after delete
-                            const currentPage = $scope.pagination.current_page;
-                            const shouldGoToPreviousPage = $scope.categories.length === 1 && currentPage > 1;
-                            $scope.loadCategoriesPaginated(shouldGoToPreviousPage ? currentPage - 1 : currentPage);
-                        }
-                    } else {
-                        showError(response.message || 'Gagal menghapus kategori');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting category:', error);
-                    $scope.loading = false;
-                    showError(error.message || 'Gagal menghapus kategori');
-                });
+            performCrudOperation('delete', null, 
+                'Kategori berhasil dihapus',
+                'Gagal menghapus kategori'
+            );
         };
         
         // ===== UTILITY FUNCTIONS =====
-        $scope.refreshData = function() {
-            $scope.clearSearch();
-        };
-        
+        $scope.refreshData = () => $scope.clearSearch();
         $scope.hasCategories = () => $scope.categories?.length > 0;
         
-        // ===== LOGOUT FUNCTION =====
         $scope.logout = function() {
             if (confirm('Apakah Anda yakin ingin logout?')) {
                 AuthService.logout()
@@ -454,16 +341,12 @@ angular.module('perpusApp')
         
         // ===== CLEANUP =====
         $scope.$on('$destroy', () => {
-            if ($scope.clearMessageTimeout) {
-                $timeout.cancel($scope.clearMessageTimeout);
-            }
-            if ($scope.searchTimeout) {
-                $timeout.cancel($scope.searchTimeout);
-            }
+            if ($scope.clearMessageTimeout) $timeout.cancel($scope.clearMessageTimeout);
+            if ($scope.searchTimeout) $timeout.cancel($scope.searchTimeout);
             destroyDataTable();
         });
         
-        // ===== CONTROLLER INITIALIZATION =====
-        initializeController();
+        // ===== INITIALIZE =====
+        init();
         $scope.loadCategoriesPaginated(1);
     }]);

@@ -13,10 +13,10 @@ angular.module('perpusApp')
             }
             
             function setupScope() {
-                // Data
+                // Data properties
                 Object.assign($scope, {
                     books: [],
-                    filteredBooks: [], // Array untuk menyimpan buku yang sudah difilter
+                    filteredBooks: [],
                     categories: [],
                     loading: false,
                     currentUser: AuthService.getCurrentUser(),
@@ -27,35 +27,27 @@ angular.module('perpusApp')
                     bookToDelete: null,
                     bookDetail: null,
                     importFile: null,
-                    selectedCategory: '' // Untuk menyimpan kategori yang dipilih
+                    selectedCategory: '',
+                    bookForm: createEmptyForm()
                 });
                 
-                resetBookForm();
-                bindMethods();
-            }
-            
-            function bindMethods() {
-                // CRUD
+                // Methods
                 Object.assign($scope, {
-                    createBook, updateBook, deleteBook, viewBookDetail,
-                    editBook, confirmDelete, showAdd: showAddModal,
+                    // CRUD operations
+                    createBook, updateBook, deleteBook, editBook, confirmDelete,
+                    viewBookDetail, editFromDetail,
                     
-                    // Modal
-                    closeModal: closeAllModals, closeDetailModal,
-                    showEditModal: () => $scope.modals.edit,
-                    showDeleteModal: () => $scope.modals.delete,
-                    showImportModal: () => $scope.modals.import,
-                    showDetailModal: () => $scope.modals.detail,
+                    // Modal management
+                    showAdd: () => { resetAllForms(); $scope.modals.add = true; },
+                    closeModal: () => Object.keys($scope.modals).forEach(key => $scope.modals[key] = false),
+                    closeDetailModal: () => { $scope.modals.detail = false; $scope.bookDetail = null; },
+                    showImport: () => { resetAllForms(); $scope.modals.import = true; },
                     
                     // Import/Export
-                    showImport: showImportModal, importExcel, exportPDF, exportExcel, downloadTemplate,
+                    importExcel, exportPDF, exportExcel, downloadTemplate,
                     
                     // File & Utils
-                    handleFileSelect, handleExcelImport, getCategoryName, formatDate,
-                    filterByCategory, // Perbaikan fungsi filter
-                    
-                    // Edit dari detail modal
-                    editFromDetail
+                    handleFileSelect, handleExcelImport, getCategoryName, formatDate, filterByCategory
                 });
             }
             
@@ -63,8 +55,7 @@ angular.module('perpusApp')
             function loadData() {
                 $scope.loading = true;
                 
-                loadCategories()
-                    .then(loadBooks)
+                Promise.all([loadCategories(), loadBooks()])
                     .then(() => $timeout(initializeDataTable, 500))
                     .catch(error => showMessage('error', 'Gagal memuat data: ' + error.message))
                     .finally(() => $scope.loading = false);
@@ -87,7 +78,7 @@ angular.module('perpusApp')
                     .then(response => {
                         if (response?.success) {
                             $scope.books = response.data.books.data;
-                            $scope.filteredBooks = [...$scope.books]; // Initialize filtered books
+                            $scope.filteredBooks = [...$scope.books];
                             if ($scope.dataTable) refreshDataTable();
                         } else {
                             throw new Error(response?.message || 'Gagal memuat buku');
@@ -95,38 +86,24 @@ angular.module('perpusApp')
                     });
             }
             
-            // ===== FILTER FUNCTION =====
+            // ===== FILTER & DATATABLE =====
             function filterByCategory(categoryId) {
                 $scope.selectedCategory = categoryId;
-                
-                if (!categoryId || categoryId === '') {
-                    // Tampilkan semua buku jika tidak ada kategori dipilih
-                    $scope.filteredBooks = [...$scope.books];
-                } else {
-                    // Filter buku berdasarkan kategori
-                    $scope.filteredBooks = $scope.books.filter(book => 
-                        book.category_id == categoryId
-                    );
-                }
-                
-                // Refresh DataTable dengan data yang sudah difilter
+                $scope.filteredBooks = categoryId ? 
+                    $scope.books.filter(book => book.category_id == categoryId) : 
+                    [...$scope.books];
                 refreshDataTable();
             }
             
-            // ===== DATATABLE MANAGEMENT =====
             function initializeDataTable() {
                 $timeout(() => {
                     try {
                         destroyExistingTable();
                         
                         const tableElement = $('#booksTable');
-                        if (!tableElement.length) {
-                            console.error('Table element #booksTable not found');
-                            return;
-                        }
+                        if (!tableElement.length) return console.error('Table element not found');
                         
                         tableElement.empty();
-                        
                         $scope.dataTable = tableElement.DataTable({
                             destroy: true,
                             data: formatBooksForTable(),
@@ -136,7 +113,7 @@ angular.module('perpusApp')
                         
                         console.log('DataTable initialized successfully');
                     } catch (error) {
-                        console.error('DataTable initialization error:', error);
+                        console.error('DataTable error:', error);
                         showMessage('error', 'Gagal menginisialisasi tabel: ' + error.message);
                     }
                 }, 100);
@@ -150,8 +127,8 @@ angular.module('perpusApp')
             }
             
             function formatBooksForTable() {
-                // Gunakan filteredBooks sebagai data source
-                return $scope.filteredBooks.map(book => ({
+                return $scope.filteredBooks.map((book, index) => ({
+                    no: index + 1, // Tambah nomor urut
                     id: book.id,
                     judul: book.judul || '',
                     pengarang: book.pengarang || '',
@@ -164,18 +141,24 @@ angular.module('perpusApp')
             
             function getTableColumns() {
                 return [
-                    { data: 'judul', title: 'Judul', width: '25%' },
-                    { data: 'pengarang', title: 'Pengarang', width: '20%' },
-                    { data: 'category_name', title: 'Kategori', width: '15%' },
-                    { data: 'penerbit', title: 'Penerbit', width: '15%' },
-                    { data: 'tahun', title: 'Tahun', width: '10%' },
-                    { data: 'stok', title: 'Stok', width: '10%' },
-                    {
-                        data: null,
-                        title: 'Aksi',
-                        width: '15%',
-                        orderable: false,
+                    { 
+                        data: null, 
+                        title: 'No', 
+                        width: '5%', 
+                        orderable: false, 
                         searchable: false,
+                        render: function(data, type, row, meta) {
+                            return meta.row + 1; // Nomor urut berdasarkan posisi dalam tabel
+                        }
+                    },
+                    { data: 'judul', title: 'Judul', width: '25%' },
+                    { data: 'pengarang', title: 'Pengarang', width: '18%' },
+                    { data: 'category_name', title: 'Kategori', width: '12%' },
+                    { data: 'penerbit', title: 'Penerbit', width: '12%' },
+                    { data: 'tahun', title: 'Tahun', width: '8%' },
+                    { data: 'stok', title: 'Stok', width: '8%' },
+                    {
+                        data: null, title: 'Aksi', width: '12%', orderable: false, searchable: false,
                         render: (data, type, row) => `
                             <div class="btn-group btn-group-sm">
                                 <button type="button" class="btn btn-primary btn-sm" 
@@ -190,33 +173,32 @@ angular.module('perpusApp')
                                         onclick="angular.element(this).scope().confirmDelete(${row.id})" title="Hapus">
                                     <i class="fas fa-trash"></i>
                                 </button>
-                            </div>
-                        `
+                            </div>`
                     }
                 ];
             }
             
             function getTableConfig() {
                 return {
-                    processing: false,
-                    serverSide: false,
-                    responsive: true,
-                    autoWidth: false,
-                    paging: true,
-                    pageLength: 10,
+                    processing: false, serverSide: false, responsive: true, autoWidth: false,
+                    paging: true, pageLength: 10, lengthChange: true, searching: true,
                     lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
-                    lengthChange: true,
-                    searching: true,
-                    search: { regex: false, smart: true },
-                    ordering: true,
-                    order: [[0, 'asc']],
-                    info: true,
-                    language: getDataTableLanguage(),
-                    dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
-                         "<'row'<'col-sm-12'tr>>" +
-                         "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-                    initComplete: () => console.log('DataTable initialized successfully'),
-                    drawCallback: () => console.log('DataTable draw callback executed')
+                    search: { regex: false, smart: true }, ordering: true, order: [[1, 'asc']], info: true, // Ganti order ke kolom judul (index 1)
+                    language: {
+                        processing: "Sedang memproses...", lengthMenu: "Tampilkan _MENU_ entri",
+                        zeroRecords: "Tidak ditemukan data yang sesuai",
+                        info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
+                        infoEmpty: "Menampilkan 0 sampai 0 dari 0 entri",
+                        infoFiltered: "(disaring dari _MAX_ entri keseluruhan)", search: "Cari:",
+                        paginate: { first: "Pertama", last: "Terakhir", next: "Selanjutnya", previous: "Sebelumnya" },
+                        aria: {
+                            sortAscending: ": aktifkan untuk mengurutkan kolom secara ascending",
+                            sortDescending: ": aktifkan untuk mengurutkan kolom secara descending"
+                        }
+                    },
+                    dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>><'row'<'col-sm-12'tr>><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                    initComplete: () => console.log('DataTable initialized'),
+                    drawCallback: () => console.log('DataTable draw callback')
                 };
             }
             
@@ -224,9 +206,7 @@ angular.module('perpusApp')
                 $timeout(() => {
                     try {
                         if ($scope.dataTable) {
-                            $scope.dataTable.clear();
-                            $scope.dataTable.rows.add(formatBooksForTable());
-                            $scope.dataTable.draw();
+                            $scope.dataTable.clear().rows.add(formatBooksForTable()).draw();
                         }
                     } catch (error) {
                         console.error('Error refreshing DataTable:', error);
@@ -234,45 +214,16 @@ angular.module('perpusApp')
                 }, 100);
             }
             
-            function getDataTableLanguage() {
-                return {
-                    processing: "Sedang memproses...",
-                    lengthMenu: "Tampilkan _MENU_ entri",
-                    zeroRecords: "Tidak ditemukan data yang sesuai",
-                    info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
-                    infoEmpty: "Menampilkan 0 sampai 0 dari 0 entri",
-                    infoFiltered: "(disaring dari _MAX_ entri keseluruhan)",
-                    search: "Cari:",
-                    paginate: {
-                        first: "Pertama",
-                        last: "Terakhir",
-                        next: "Selanjutnya",
-                        previous: "Sebelumnya"
-                    },
-                    aria: {
-                        sortAscending: ": aktifkan untuk mengurutkan kolom secara ascending",
-                        sortDescending: ": aktifkan untuk mengurutkan kolom secara descending"
-                    }
-                };
-            }
-            
             // ===== FORM MANAGEMENT =====
-            function resetBookForm() {
-                $scope.bookForm = {
-                    id: null,
-                    judul: '',
-                    pengarang: '',
-                    category_id: '',
-                    penerbit: '',
-                    tahun: new Date().getFullYear(),
-                    isbn: '',
-                    stok: 1,
-                    path: null
+            function createEmptyForm() {
+                return {
+                    id: null, judul: '', pengarang: '', category_id: '', penerbit: '',
+                    tahun: new Date().getFullYear(), isbn: '', stok: 1, path: null
                 };
             }
             
             function resetAllForms() {
-                resetBookForm();
+                $scope.bookForm = createEmptyForm();
                 $scope.bookToDelete = null;
                 $scope.bookDetail = null;
                 $scope.importFile = null;
@@ -281,8 +232,7 @@ angular.module('perpusApp')
             
             // ===== VALIDATION =====
             function validateForm() {
-                $scope.success = '';
-                $scope.error = '';
+                $scope.success = $scope.error = '';
                 
                 const validations = [
                     { field: 'judul', message: 'Judul buku harus diisi' },
@@ -293,8 +243,7 @@ angular.module('perpusApp')
                 for (let validation of validations) {
                     const value = $scope.bookForm[validation.field];
                     const isInvalid = validation.condition ? 
-                        validation.condition(value) : 
-                        !value?.toString().trim();
+                        validation.condition(value) : !value?.toString().trim();
                     
                     if (isInvalid) {
                         showMessage('error', validation.message);
@@ -302,7 +251,7 @@ angular.module('perpusApp')
                     }
                 }
                 
-                // Validate year
+                // Validate year and stock
                 const year = parseInt($scope.bookForm.tahun);
                 const currentYear = new Date().getFullYear();
                 if (!year || year < 1000 || year > currentYear + 10) {
@@ -310,7 +259,6 @@ angular.module('perpusApp')
                     return false;
                 }
                 
-                // Validate stock
                 const stok = parseInt($scope.bookForm.stok);
                 if (isNaN(stok) || stok < 0) {
                     showMessage('error', 'Stok tidak boleh negatif');
@@ -325,12 +273,10 @@ angular.module('perpusApp')
                     showMessage('error', 'Format file tidak diizinkan');
                     return false;
                 }
-                
                 if (file.size > maxSizeMB * 1024 * 1024) {
                     showMessage('error', `Ukuran file maksimal ${maxSizeMB}MB`);
                     return false;
                 }
-                
                 return true;
             }
             
@@ -348,7 +294,6 @@ angular.module('perpusApp')
                     showMessage('error', 'ID buku tidak ditemukan');
                     return;
                 }
-                
                 if (!validateForm()) return;
                 executeBookOperation(
                     () => BookService.updateBook($scope.bookForm.id, $scope.bookForm),
@@ -361,7 +306,6 @@ angular.module('perpusApp')
                     showMessage('error', 'Data buku untuk dihapus tidak valid');
                     return;
                 }
-                
                 executeBookOperation(
                     () => BookService.deleteBook($scope.bookToDelete.id),
                     'Buku berhasil dihapus'
@@ -369,10 +313,7 @@ angular.module('perpusApp')
             }
             
             function viewBookDetail(bookId) {
-                if (!bookId) {
-                    showMessage('error', 'ID buku tidak valid');
-                    return;
-                }
+                if (!bookId) return showMessage('error', 'ID buku tidak valid');
                 
                 $scope.loading = true;
                 $scope.bookDetail = null;
@@ -411,21 +352,12 @@ angular.module('perpusApp')
                 });
             }
             
-            // Fungsi baru untuk edit dari modal detail
             function editFromDetail(bookId) {
-                if (!bookId) {
-                    showMessage('error', 'ID buku tidak valid');
-                    return;
-                }
+                if (!bookId) return showMessage('error', 'ID buku tidak valid');
                 
-                // Tutup modal detail terlebih dahulu
                 $scope.modals.detail = false;
                 $scope.bookDetail = null;
-                
-                // Kemudian buka modal edit
-                $timeout(() => {
-                    editBook(bookId);
-                }, 100);
+                $timeout(() => editBook(bookId), 100);
             }
             
             function confirmDelete(id) {
@@ -438,16 +370,63 @@ angular.module('perpusApp')
             // ===== IMPORT/EXPORT =====
             function importExcel() {
                 if (!$scope.importFile) {
-                    showMessage('error', 'Pilih file Excel terlebih dahulu');
-                    return;
+                    return showMessage('error', 'Pilih file Excel terlebih dahulu');
                 }
                 
-                executeBookOperation(
-                    () => BookService.importExcel($scope.importFile),
-                    'Import berhasil'
-                );
+                // Validasi file
+                var allowedTypes = [
+                    'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                ];
+                
+                var allowedExtensions = ['.xls', '.xlsx'];
+                var fileName = $scope.importFile.name.toLowerCase();
+                var hasValidExtension = allowedExtensions.some(function(ext) {
+                    return fileName.endsWith(ext);
+                });
+                
+                if (!allowedTypes.includes($scope.importFile.type) && !hasValidExtension) {
+                    return showMessage('error', 'Format file tidak valid. Hanya file Excel (.xls atau .xlsx) yang diizinkan');
+                }
+
+                // Tampilkan loading
+                $scope.loading = true;
+                showMessage('success', 'Sedang memproses import...');
+                
+                // Panggil service dengan file yang benar
+                BookService.importExcel($scope.importFile)
+                    .then(function(response) {
+                        console.log('Import response:', response);
+                        
+                        if (response && response.success) {
+                            showMessage('success', 'Import Excel berhasil');
+                            $scope.closeModal();
+                            resetAllForms();
+                            
+                            // Reload data setelah import berhasil
+                            return loadBooks().then(function() {
+                                if ($scope.selectedCategory) {
+                                    filterByCategory($scope.selectedCategory);
+                                }
+                                console.log('Data reloaded after import');
+                            });
+                        } else {
+                            var errorMsg = response && response.message ? response.message : 
+                                        (response && response.error ? response.error : 'Import gagal');
+                            throw new Error(errorMsg);
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('Import error:', error);
+                        var errorMessage = error.message || error || 'Import Excel gagal';
+                        showMessage('error', errorMessage);
+                    })
+                    .finally(function() {
+                        $scope.loading = false;
+                        console.log('Import operation completed');
+                    });
             }
-            
+                        
             function exportPDF() {
                 executeExportOperation(BookService.exportPDF, 'Export PDF');
             }
@@ -463,18 +442,12 @@ angular.module('perpusApp')
             // ===== FILE HANDLERS =====
             function handleFileSelect(event) {
                 const file = event.target.files[0];
-                if (!file) {
-                    $scope.bookForm.path = null;
-                    return;
-                }
+                if (!file) return $scope.bookForm.path = null;
                 
                 const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-                const maxSizeMB = 5;
-                
-                if (!validateFile(file, allowedTypes, maxSizeMB)) {
+                if (!validateFile(file, allowedTypes, 5)) {
                     event.target.value = '';
-                    $scope.bookForm.path = null;
-                    return;
+                    return $scope.bookForm.path = null;
                 }
                 
                 $scope.bookForm.path = file;
@@ -482,63 +455,70 @@ angular.module('perpusApp')
             }
             
             function handleExcelImport(event) {
-                const file = event.target.files[0];
+                var file = event.target.files[0];
                 if (!file) {
                     $scope.importFile = null;
+                    $scope.$apply();
                     return;
                 }
                 
-                const allowedTypes = [
+                // Validasi yang lebih ketat
+                var allowedTypes = [
                     'application/vnd.ms-excel',
                     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 ];
                 
-                if (validateFile(file, allowedTypes, 10)) {
-                    $scope.importFile = file;
-                } else {
+                var allowedExtensions = ['.xls', '.xlsx'];
+                var fileName = file.name.toLowerCase();
+                var hasValidExtension = allowedExtensions.some(function(ext) {
+                    return fileName.endsWith(ext);
+                });
+                
+                // Cek tipe dan ekstensi file
+                if (!allowedTypes.includes(file.type) && !hasValidExtension) {
+                    showMessage('error', 'Format file tidak valid. Hanya file Excel (.xls atau .xlsx) yang diizinkan');
                     event.target.value = '';
                     $scope.importFile = null;
-                }
-            }
-            
-            // ===== MODAL MANAGEMENT =====
-            function closeAllModals() {
-                Object.keys($scope.modals).forEach(key => $scope.modals[key] = false);
-            }
-            
-            function closeDetailModal() {
-                $scope.modals.detail = false;
-                $scope.bookDetail = null;
-            }
-            
-            function showAddModal() {
-                resetAllForms();
-                $scope.modals.add = true;
-            }
-            
-            function showImportModal() {
-                resetAllForms();
-                $scope.modals.import = true;
-            }
-            
-            // ===== HELPER FUNCTIONS =====
-            function loadBookData(id, callback) {
-                if (!id) {
-                    showMessage('error', 'ID buku tidak valid');
+                    $scope.$apply();
                     return;
                 }
                 
-                $scope.loading = true;
+                // Cek ukuran file
+                var maxSize = 10 * 1024 * 1024; // 10MB
+                if (file.size > maxSize) {
+                    showMessage('error', 'Ukuran file terlalu besar. Maksimal 10MB');
+                    event.target.value = '';
+                    $scope.importFile = null;
+                    $scope.$apply();
+                    return;
+                }
                 
+                if (file.size === 0) {
+                    showMessage('error', 'File kosong');
+                    event.target.value = '';
+                    $scope.importFile = null;
+                    $scope.$apply();
+                    return;
+                }
+                
+                // File valid, simpan
+                $scope.importFile = file;
+                showMessage('success', 'File ' + file.name + ' siap untuk diimport');
+                $scope.$apply();
+            }
+
+                            
+            // ===== HELPER FUNCTIONS =====
+            function loadBookData(id, callback) {
+                if (!id) return showMessage('error', 'ID buku tidak valid');
+                
+                $scope.loading = true;
                 BookService.getBookDetail(id)
                     .then(response => {
                         if (response?.success) {
                             const bookData = formatBookDetail(response);
-                            if (bookData) {
-                                callback(bookData);
-                            } else {
-                                throw new Error('Data buku tidak ditemukan atau format tidak valid');
-                            }
+                            if (bookData) callback(bookData);
+                            else throw new Error('Data buku tidak ditemukan atau format tidak valid');
                         } else {
                             throw new Error(response?.message || 'Gagal mengambil data buku');
                         }
@@ -550,29 +530,44 @@ angular.module('perpusApp')
             function executeBookOperation(operation, successMessage) {
                 $scope.loading = true;
                 
+                // Log untuk debugging
+                console.log('Executing operation:', successMessage);
+                
                 operation()
-                    .then(response => {
-                        if (response?.success) {
+                    .then(function(response) {
+                        console.log('Operation response:', response);
+                        
+                        if (response && response.success) {
                             showMessage('success', successMessage);
-                            closeAllModals();
+                            $scope.closeModal();
                             resetAllForms();
-                            return loadBooks().then(() => {
-                                // Re-apply filter setelah data dimuat ulang
+                            
+                            // Reload data setelah import berhasil
+                            return loadBooks().then(function() {
                                 if ($scope.selectedCategory) {
                                     filterByCategory($scope.selectedCategory);
                                 }
+                                console.log('Data reloaded after import');
                             });
                         } else {
-                            throw new Error(response?.message || response?.error || 'Operasi gagal');
+                            var errorMsg = response && response.message ? response.message : 
+                                        (response && response.error ? response.error : 'Operasi gagal');
+                            throw new Error(errorMsg);
                         }
                     })
-                    .catch(error => showMessage('error', error.message || 'Operasi gagal'))
-                    .finally(() => $scope.loading = false);
+                    .catch(function(error) {
+                        console.error('Operation error:', error);
+                        var errorMessage = error.message || error || 'Operasi gagal';
+                        showMessage('error', errorMessage);
+                    })
+                    .finally(function() {
+                        $scope.loading = false;
+                        console.log('Operation completed');
+                    });
             }
             
             function executeExportOperation(serviceMethod, operationName) {
                 $scope.loading = true;
-                
                 serviceMethod()
                     .then(response => {
                         if (response?.success) {
@@ -588,11 +583,7 @@ angular.module('perpusApp')
             function showMessage(type, message) {
                 $scope.success = type === 'success' ? message : '';
                 $scope.error = type === 'error' ? message : '';
-                
-                $timeout(() => {
-                    $scope.success = '';
-                    $scope.error = '';
-                }, 5000);
+                $timeout(() => { $scope.success = $scope.error = ''; }, 5000);
             }
             
             function extractData(response, paths) {
@@ -631,7 +622,6 @@ angular.module('perpusApp')
             
             function extractBookData(response) {
                 const patterns = ['data.books.data', 'data.book', 'data.data.book', 'data.data', 'data'];
-                
                 for (let pattern of patterns) {
                     const data = getNestedValue(response, pattern);
                     if (data) return Array.isArray(data) ? data[0] : data;
@@ -651,14 +641,11 @@ angular.module('perpusApp')
             
             function formatDate(dateString) {
                 if (!dateString) return 'Tidak tersedia';
-                
                 try {
                     const date = new Date(dateString);
                     return isNaN(date.getTime()) ? 'Tanggal tidak valid' :
                         date.toLocaleDateString('id-ID', {
-                            day: '2-digit',
-                            month: 'long',
-                            year: 'numeric'
+                            day: '2-digit', month: 'long', year: 'numeric'
                         });
                 } catch (error) {
                     return dateString;
@@ -667,9 +654,7 @@ angular.module('perpusApp')
             
             // ===== CLEANUP =====
             $scope.$on('$destroy', function() {
-                if ($scope.dataTable) {
-                    $scope.dataTable.destroy();
-                }
+                if ($scope.dataTable) $scope.dataTable.destroy();
             });
         }
     ]);
