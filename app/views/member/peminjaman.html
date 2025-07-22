@@ -88,9 +88,44 @@
                     {{ error }}
                 </div>
 
-                <!-- Filters -->
+                <!-- Filter Section -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-search"></i>
+                            Pencarian
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" placeholder="Cari judul buku..." 
+                                           ng-model="filters.search" ng-change="onSearchChange()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Data Table -->
                 <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-table"></i>
+                            Data Peminjaman
+                        </h3>
+                        <div class="card-tools">
+                            <div class="input-group input-group-sm" style="width: 150px;">
+                                <select class="form-control" ng-model="perPage" ng-change="changePerPage()">
+                                    <option value="10">10 per halaman</option>
+                                    <option value="25">25 per halaman</option>
+                                    <option value="50">50 per halaman</option>
+                                    <option value="100">100 per halaman</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     <div class="card-body">
                         <div ng-if="loading" class="text-center">
                             <i class="fas fa-spinner fa-spin"></i> Memuat data...
@@ -100,6 +135,7 @@
                             <table id="borrowsTable" class="table table-bordered table-striped">
                                 <thead>
                                     <tr>
+                                        <th>No</th>
                                         <th>ID</th>
                                         <th>Judul Buku</th>
                                         <th>Kode Buku</th>
@@ -111,7 +147,8 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr ng-repeat="borrow in borrows">
+                                    <tr ng-repeat="borrow in borrows | orderBy:'id'">
+                                        <td>{{ getRowNumber($index) }}</td>
                                         <td>{{ borrow.id }}</td>
                                         <td>{{ getBookTitle(borrow) }}</td>
                                         <td>{{ getBookCode(borrow) }}</td>
@@ -122,14 +159,14 @@
                                         </td>
                                         <td>
                                             <small class="text-muted">
-                                                <span ng-if="getActualStatus(borrow) === 'returned' || getActualStatus(borrow) === 'late_return'">Dikembalikan:</span>
-                                                <span ng-if="getActualStatus(borrow) === 'borrowed' || getActualStatus(borrow) === 'overdue'">Target:</span>
+                                                <span ng-if="getActualStatus(borrow) === 'returned'">Dikembalikan:</span>
+                                                <span ng-if="getActualStatus(borrow) === 'borrowed'">Target:</span>
                                                 <span ng-if="getActualStatus(borrow) === 'pending'">Rencana:</span>
                                             </small><br>
                                             {{ getReturnDate(borrow) || '-' }}
                                         </td>
                                         <td>
-                                            <span class="badge {{ getStatusClass(borrow) }}">
+                                            <span class="{{ getStatusClass(borrow) }}">
                                                 {{ getStatusText(borrow) }}
                                             </span>
                                         </td>
@@ -147,10 +184,6 @@
                                                 <i class="fas fa-check-circle"></i> Sudah dikembalikan
                                             </span>
                                             
-                                            <span ng-if="getActualStatus(borrow) === 'late_return'" class="text-dark">
-                                                <i class="fas fa-check-circle"></i> Dikembalikan terlambat
-                                            </span>
-                                            
                                             <span ng-if="getActualStatus(borrow) === 'pending'" class="text-warning">
                                                 <i class="fas fa-hourglass-half"></i> Menunggu persetujuan
                                             </span>
@@ -158,7 +191,7 @@
                                     </tr>
                                     
                                     <tr ng-if="borrows.length === 0">
-                                        <td colspan="8" class="text-center text-muted">
+                                        <td colspan="9" class="text-center text-muted">
                                             <i class="fas fa-inbox"></i><br>
                                             Belum ada data peminjaman
                                         </td>
@@ -167,48 +200,37 @@
                             </table>
                         </div>
                     </div>
-                </div>
-
-                <!-- Pagination -->
-                <div class="card" ng-if="totalItems > perPage">
-                    <div class="card-body">
+                    <!-- Pagination -->
+                    <div class="card-footer" ng-if="totalPages > 1">
                         <div class="row">
-                            <div class="col-md-6">
-                                <p class="text-muted">
-                                    Menampilkan {{ (currentPage - 1) * perPage + 1 }} - 
-                                    {{ Math.min(currentPage * perPage, totalItems) }} dari {{ totalItems }} data
-                                </p>
+                            <div class="col-sm-5">
+                                <div class="dataTables_info">
+                                    Menampilkan {{ ((currentPage - 1) * perPage) + 1 }} sampai 
+                                    {{ Math.min(currentPage * perPage, totalItems) }} dari 
+                                    {{ totalItems }} data
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <nav aria-label="Pagination">
-                                    <ul class="pagination justify-content-end">
-                                        <li class="page-item" ng-class="{'disabled': currentPage === 1}">
-                                            <a class="page-link" href="javascript:void(0);" ng-click="currentPage = 1; pageChanged()">
-                                                <i class="fas fa-angle-double-left"></i>
-                                            </a>
-                                        </li>
-                                        <li class="page-item" ng-class="{'disabled': currentPage === 1}">
-                                            <a class="page-link" href="javascript:void(0);" ng-click="currentPage = currentPage - 1; pageChanged()">
-                                                <i class="fas fa-angle-left"></i>
-                                            </a>
-                                        </li>
-                                        
-                                        <li class="page-item active" ng-if="Math.ceil(totalItems / perPage) <= 5">
-                                            <span class="page-link">{{ currentPage }} / {{ Math.ceil(totalItems / perPage) }}</span>
-                                        </li>
-                                        
-                                        <li class="page-item" ng-class="{'disabled': currentPage === Math.ceil(totalItems / perPage)}">
-                                            <a class="page-link" href="javascript:void(0);" ng-click="currentPage = currentPage + 1; pageChanged()">
-                                                <i class="fas fa-angle-right"></i>
-                                            </a>
-                                        </li>
-                                        <li class="page-item" ng-class="{'disabled': currentPage === Math.ceil(totalItems / perPage)}">
-                                            <a class="page-link" href="javascript:void(0);" ng-click="currentPage = Math.ceil(totalItems / perPage); pageChanged()">
-                                                <i class="fas fa-angle-double-right"></i>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </nav>
+                            <div class="col-sm-7">
+                                <ul class="pagination pagination-sm m-0 float-right">
+                                    <li class="page-item" ng-class="{ disabled: currentPage <= 1 }">
+                                        <a class="page-link" href="javascript:void(0);" ng-click="previousPage()">
+                                            <i class="fas fa-angle-left"></i>
+                                        </a>
+                                    </li>
+                                    
+                                    <li class="page-item" ng-repeat="page in getPageNumbers()" 
+                                        ng-class="{ active: page === currentPage }">
+                                        <a class="page-link" href="javascript:void(0);" ng-click="goToPage(page)">
+                                            {{ page }}
+                                        </a>
+                                    </li>
+                                    
+                                    <li class="page-item" ng-class="{ disabled: currentPage >= totalPages }">
+                                        <a class="page-link" href="javascript:void(0);" ng-click="nextPage()">
+                                            <i class="fas fa-angle-right"></i>
+                                        </a>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -216,6 +238,12 @@
             </div>
         </section>
     </div>
+    
+    <!-- Footer -->
+    <footer class="main-footer">
+        <strong>Copyright &copy; 2025 <a href="#">Perpustakaan App</a>.</strong>
+        All rights reserved.
+    </footer>
 </div>
 
 <style>
@@ -226,4 +254,15 @@
     .text-danger { color: #dc3545 !important; }
     .text-warning { color: #ffc107 !important; }
     .text-success { color: #28a745 !important; }
+    .dataTables_info {
+        font-size: 14px;
+        padding-top: 8px;
+    }
+    .pagination {
+        margin: 0;
+    }
+    .pagination .page-link {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
 </style>

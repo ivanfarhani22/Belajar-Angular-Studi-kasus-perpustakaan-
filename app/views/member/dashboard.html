@@ -183,34 +183,31 @@
                         </div>
                     </div>
 
-                    <!-- Recommended Books -->
+                    <!-- Pengembalian Terbaru -->
                     <div class="col-md-6">
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Rekomendasi Buku</h3>
+                                <h3 class="card-title">Pengembalian Terbaru</h3>
                             </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-12" ng-repeat="book in recentBooks">
-                                        <div class="info-box">
-                                            <span class="info-box-icon bg-info">
-                                                <i class="fas fa-book"></i>
-                                            </span>
-                                            <div class="info-box-content">
-                                                <span class="info-box-text">{{ book.title }}</span>
-                                                <span class="info-box-number">{{ book.author }}</span>
-                                                <div class="progress">
-                                                    <div class="progress-bar" ng-style="{'width': (book.stock > 0 ? '100%' : '0%')}"></div>
-                                                </div>
-                                                <span class="progress-description">
-                                                    {{ book.stock > 0 ? 'Tersedia' : 'Tidak Tersedia' }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-12" ng-if="recentBooks.length === 0">
-                                        <p class="text-center">Tidak ada rekomendasi buku</p>
-                                    </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Judul Buku</th>
+                                                <th>Tanggal Kembali</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr ng-repeat="return in recentReturns">
+                                                <td>{{ return.book_title }}</td>
+                                                <td>{{ formatDate(return.return_date) }}</td>
+                                            </tr>
+                                            <tr ng-if="recentReturns.length === 0">
+                                                <td colspan="2" class="text-center">Tidak ada data pengembalian</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>

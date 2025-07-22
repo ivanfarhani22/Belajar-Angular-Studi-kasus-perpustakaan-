@@ -104,34 +104,34 @@
                 <!-- Main Card -->
                 <div class="card">
                     <!-- Update card-header section -->
-<div class="card-header">
-    <div class="d-flex justify-content-between align-items-center flex-wrap">
-        <h3 class="card-title mb-2 mb-md-0">Daftar Kategori</h3>
-        <div class="card-tools d-flex align-items-center">
-            <!-- Search Form -->
-            <div class="input-group input-group-sm mr-2" style="width: 200px;">
-                <input type="text" 
-                       class="form-control" 
-                       placeholder="Cari kategori..."
-                       ng-model="searchQuery"
-                       ng-model-options="{ debounce: 500 }"
-                       ng-change="performSearch()">
-                <div class="input-group-append" ng-if="searchQuery">
-                    <button class="btn btn-default" 
-                            type="button"
-                            ng-click="clearSearch()"
-                            title="Hapus pencarian">
-                        <i class="fas fa-times"></i>
-                    </button>
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h3 class="card-title mb-2 mb-md-0">Daftar Kategori</h3>
+                        <div class="card-tools d-flex align-items-center">
+                            <!-- Search Form -->
+                            <div class="input-group input-group-sm mr-2" style="width: 200px;">
+                                <input type="text" 
+                                    class="form-control" 
+                                    placeholder="Cari kategori..."
+                                    ng-model="searchQuery"
+                                    ng-model-options="{ debounce: 500 }"
+                                    ng-change="performSearch()">
+                                <div class="input-group-append" ng-if="searchQuery">
+                                    <button class="btn btn-default" 
+                                            type="button"
+                                            ng-click="clearSearch()"
+                                            title="Hapus pencarian">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Add Button -->
+                            <button class="btn btn-primary btn-sm" ng-click="showAdd()">
+                                <i class="fas fa-plus"></i> Tambah Kategori
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <!-- Add Button -->
-            <button class="btn btn-primary btn-sm" ng-click="showAdd()">
-                <i class="fas fa-plus"></i> Tambah Kategori
-            </button>
-        </div>
-    </div>
-</div>
                     <div class="card-body">
                         <!-- Loading -->
                         <div ng-if="loading" class="text-center py-4">
@@ -221,6 +221,11 @@
             </div>
         </section>
     </div>
+        <!-- Footer -->
+    <footer class="main-footer">
+        <strong>Copyright &copy; 2025 <a href="#">Perpustakaan App</a>.</strong>
+        All rights reserved.
+    </footer>
 </div>
 
 <!-- Modal Backdrop -->
