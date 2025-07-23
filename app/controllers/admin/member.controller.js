@@ -54,7 +54,6 @@
         // ===== DATATABLE MANAGEMENT =====
 
         function initializeMembersDataTable() {
-            console.log('Initializing Members DataTable...');
             destroyDataTable('#membersTable');
             
             vm.membersDataTable = $('#membersTable').DataTable({
@@ -94,11 +93,9 @@
 
         function createMembersAjaxConfig() {
             return function(data, callback, settings) {
-                console.log('DataTable request data:', data);
                 
                 MemberService.getServerSideMembers(data)
                     .then(response => {
-                        console.log('DataTable response:', response);
                         
                         if (response.success) {
                             callback({
@@ -113,7 +110,6 @@
                         }
                     })
                     .catch(error => {
-                        console.error('DataTable catch error:', error);
                         callback(createEmptyDataTableResponse(data.draw));
                         handleError(error);
                     });
@@ -123,7 +119,6 @@
         // ===== SEARCH FUNCTIONS =====
 
         function searchMembers() {
-            console.log('searchMembers called with query:', $scope.searchQuery);
             
             if (vm.searchTimeout) $timeout.cancel(vm.searchTimeout);
 
@@ -136,14 +131,12 @@
         }
 
         function executeSearch() {
-            console.log('executeSearch called with query:', $scope.searchQuery);
             $scope.loading = true;
             clearMessages();
             
             const searchQuery = $scope.searchQuery.trim();
             const searchParams = { search: searchQuery, per_page: 10, page: 1 };
             
-            console.log('Search params:', searchParams);
             
             const searchMethod = typeof MemberService.searchMembers === 'function' 
                 ? () => MemberService.searchMembers(searchParams.search, searchParams.per_page, searchParams.page)
@@ -151,12 +144,10 @@
             
             searchMethod()
                 .then(response => {
-                    console.log('Search response:', response);
                     
                     if (response && response.success) {
                         $scope.searchResults = Array.isArray(response.data) ? response.data : (response.data.data || []);
                         $scope.showSearchResults = true;
-                        console.log('Search results count:', $scope.searchResults.length);
                         
                         if ($scope.searchResults.length === 0) {
                             showError(`Tidak ada member yang ditemukan dengan kata kunci: ${searchQuery}`);
@@ -167,7 +158,6 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Search error:', error);
                     resetSearchResults();
                     handleSearchError(error);
                 })
@@ -182,10 +172,8 @@
         }
 
         function selectMemberFromSearch(member) {
-            console.log('selectMemberFromSearch called with:', member);
             
             if (!member || !member.id) {
-                console.error('Invalid member data:', member);
                 showError('Data member tidak valid');
                 return;
             }
@@ -204,7 +192,6 @@
         }
 
         function handleSearchError(error) {
-            console.error('Search operation failed:', error);
             let message = 'Terjadi kesalahan saat mencari member. Silakan coba lagi.';
             
             if (error && error.data) {
@@ -296,7 +283,6 @@
         }
 
         function handleError(error) {
-            console.error('Operation failed:', error);
             let message = 'Terjadi kesalahan. Silakan coba lagi.';
             
             if (error && error.message) {

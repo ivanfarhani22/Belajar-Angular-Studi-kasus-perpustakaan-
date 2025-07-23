@@ -7,12 +7,10 @@
     LoginController.$inject = ['$scope', '$location', 'AuthService'];
 
     function LoginController($scope, $location, AuthService) {
-        console.log('LoginController initialized');
 
         // Check if user is already logged in
         if (AuthService.isLoggedIn()) {
             var user = AuthService.getCurrentUser();
-            console.log('User already logged in:', user);
             if (user && user.role === 'admin') {
                 $location.path('/admin/dashboard');
             } else {
@@ -38,7 +36,6 @@
         $scope.clearError = clearError;
 
         function login() {
-            console.log('Login attempt with credentials:', $scope.credentials);
             
             // Basic validation
             if (!$scope.credentials.username || !$scope.credentials.password) {
@@ -51,15 +48,12 @@
 
             AuthService.login($scope.credentials)
                 .then(function(response) {
-                    console.log('Login success:', response);
                     $scope.loading = false;
                     
                     if (response.success) {
                         // Success feedback
-                        console.log('Login successful, redirecting...');
                         // Show success message if needed
                         if (response.message) {
-                            console.log('Login message:', response.message);
                         }
                         // Redirect is handled in AuthService
                     } else {
@@ -67,7 +61,6 @@
                     }
                 })
                 .catch(function(error) {
-                    console.error('Login error:', error);
                     $scope.loading = false;
                     
                     // Handle error messages more gracefully

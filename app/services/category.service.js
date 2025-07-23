@@ -4,7 +4,6 @@ angular.module('perpusApp')
         
         // Response handler
         const handleResponse = (response) => {
-            console.log('Raw API Response:', response);
             
             if (!response?.data) {
                 return {
@@ -33,7 +32,6 @@ angular.module('perpusApp')
         
         // Error handler
         const handleError = (error) => {
-            console.error('API Error:', error);
             
             let errorMessage = 'Terjadi kesalahan pada server';
             
@@ -165,7 +163,6 @@ angular.module('perpusApp')
                         }
                     })
                     .catch(error => {
-                        console.error('Error searching categories:', error);
                         deferred.resolve({
                             success: true,
                             data: {

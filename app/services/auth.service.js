@@ -41,7 +41,6 @@
                 }
             })
             .then(function(response) {
-                console.log('Login response:', response.data);
                 
                 // Check if response is successful and contains token
                 if (response.data && response.data.data && response.data.data.token) {
@@ -84,7 +83,6 @@
                 }
             })
             .catch(function(error) {
-                console.error('Login error:', error);
                 
                 // Handle different error scenarios
                 var errorMessage = 'Login failed';
@@ -129,14 +127,12 @@
                 }
             })
             .then(function(response) {
-                console.log('Register response:', response.data);
                 deferred.resolve({
                     success: true,
                     message: response.data.message || 'Registration successful'
                 });
             })
             .catch(function(error) {
-                console.error('Register error:', error);
                 
                 var errorMessage = 'Registration failed';
                 if (error.data && error.data.message) {

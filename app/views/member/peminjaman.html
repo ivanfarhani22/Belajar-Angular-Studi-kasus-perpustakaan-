@@ -136,7 +136,6 @@
                                 <thead>
                                     <tr>
                                         <th>No</th>
-                                        <th>ID</th>
                                         <th>Judul Buku</th>
                                         <th>Kode Buku</th>
                                         <th>Pengarang</th>
@@ -149,7 +148,6 @@
                                 <tbody>
                                     <tr ng-repeat="borrow in borrows | orderBy:'id'">
                                         <td>{{ getRowNumber($index) }}</td>
-                                        <td>{{ borrow.id }}</td>
                                         <td>{{ getBookTitle(borrow) }}</td>
                                         <td>{{ getBookCode(borrow) }}</td>
                                         <td>{{ getBookAuthor(borrow) }}</td>

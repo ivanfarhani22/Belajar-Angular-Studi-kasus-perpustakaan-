@@ -7,7 +7,6 @@
     RegisterController.$inject = ['$scope', '$location', 'AuthService'];
 
     function RegisterController($scope, $location, AuthService) {
-        console.log('RegisterController initialized');
 
         // Check if user is already logged in
         if (AuthService.isLoggedIn()) {
@@ -43,7 +42,6 @@
         $scope.clearMessages = clearMessages;
 
         function register() {
-            console.log('Register attempt with data:', $scope.userData);
             
             // Basic validation
             if (!validateForm()) {
@@ -56,7 +54,6 @@
 
             AuthService.register($scope.userData)
                 .then(function(response) {
-                    console.log('Register success:', response);
                     $scope.loading = false;
                     
                     if (response.success) {
@@ -81,7 +78,6 @@
                     }
                 })
                 .catch(function(error) {
-                    console.error('Register error:', error);
                     $scope.loading = false;
                     
                     if (error.data && error.data.message) {

@@ -111,9 +111,7 @@ angular.module('perpusApp')
                             ...getTableConfig()
                         });
                         
-                        console.log('DataTable initialized successfully');
                     } catch (error) {
-                        console.error('DataTable error:', error);
                         showMessage('error', 'Gagal menginisialisasi tabel: ' + error.message);
                     }
                 }, 100);
@@ -209,7 +207,6 @@ angular.module('perpusApp')
                             $scope.dataTable.clear().rows.add(formatBooksForTable()).draw();
                         }
                     } catch (error) {
-                        console.error('Error refreshing DataTable:', error);
                     }
                 }, 100);
             }
@@ -396,7 +393,6 @@ angular.module('perpusApp')
                 // Panggil service dengan file yang benar
                 BookService.importExcel($scope.importFile)
                     .then(function(response) {
-                        console.log('Import response:', response);
                         
                         if (response && response.success) {
                             showMessage('success', 'Import Excel berhasil');
@@ -408,7 +404,6 @@ angular.module('perpusApp')
                                 if ($scope.selectedCategory) {
                                     filterByCategory($scope.selectedCategory);
                                 }
-                                console.log('Data reloaded after import');
                             });
                         } else {
                             var errorMsg = response && response.message ? response.message : 
@@ -417,13 +412,11 @@ angular.module('perpusApp')
                         }
                     })
                     .catch(function(error) {
-                        console.error('Import error:', error);
                         var errorMessage = error.message || error || 'Import Excel gagal';
                         showMessage('error', errorMessage);
                     })
                     .finally(function() {
                         $scope.loading = false;
-                        console.log('Import operation completed');
                     });
             }
                         
@@ -529,13 +522,10 @@ angular.module('perpusApp')
             
             function executeBookOperation(operation, successMessage) {
                 $scope.loading = true;
-                
-                // Log untuk debugging
-                console.log('Executing operation:', successMessage);
+
                 
                 operation()
                     .then(function(response) {
-                        console.log('Operation response:', response);
                         
                         if (response && response.success) {
                             showMessage('success', successMessage);
@@ -547,7 +537,6 @@ angular.module('perpusApp')
                                 if ($scope.selectedCategory) {
                                     filterByCategory($scope.selectedCategory);
                                 }
-                                console.log('Data reloaded after import');
                             });
                         } else {
                             var errorMsg = response && response.message ? response.message : 
@@ -556,13 +545,11 @@ angular.module('perpusApp')
                         }
                     })
                     .catch(function(error) {
-                        console.error('Operation error:', error);
                         var errorMessage = error.message || error || 'Operasi gagal';
                         showMessage('error', errorMessage);
                     })
                     .finally(function() {
                         $scope.loading = false;
-                        console.log('Operation completed');
                     });
             }
             

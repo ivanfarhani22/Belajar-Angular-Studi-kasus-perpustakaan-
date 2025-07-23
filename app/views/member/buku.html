@@ -230,42 +230,11 @@
                                     <label class="font-weight-bold">
                                         <i class="fas fa-clock"></i> Pilih Durasi Peminjaman:
                                     </label>
-                                    <select class="form-control form-control-lg" 
+                                    <input type="date" class="form-control form-control-lg" 
                                             ng-model="selectedDuration" 
                                             ng-change="onDurationChange()"
                                             required>
-                                        <option value="">-- Pilih durasi peminjaman --</option>
-                                        <option value="1">1 hari</option>
-                                        <option value="2">2 hari</option>
-                                        <option value="3">3 hari</option>
-                                        <option value="4">4 hari</option>
-                                        <option value="5">5 hari</option>
-                                        <option value="6">6 hari</option>
-                                        <option value="7">1 minggu (7 hari)</option>
-                                        <option value="8">8 hari</option>
-                                        <option value="9">9 hari</option>
-                                        <option value="10">10 hari</option>
-                                        <option value="11">11 hari</option>
-                                        <option value="12">12 hari</option>
-                                        <option value="13">13 hari</option>
-                                        <option value="14">2 minggu (14 hari)</option>
-                                        <option value="15">15 hari</option>
-                                        <option value="16">16 hari</option>
-                                        <option value="17">17 hari</option>
-                                        <option value="18">18 hari</option>
-                                        <option value="19">19 hari</option>
-                                        <option value="20">20 hari</option>
-                                        <option value="21">3 minggu (21 hari)</option>
-                                        <option value="22">22 hari</option>
-                                        <option value="23">23 hari</option>
-                                        <option value="24">24 hari</option>
-                                        <option value="25">25 hari</option>
-                                        <option value="26">26 hari</option>
-                                        <option value="27">27 hari</option>
-                                        <option value="28">4 minggu (28 hari)</option>
-                                        <option value="29">29 hari</option>
-                                        <option value="30">1 bulan (30 hari)</option>
-                                    </select>
+                                    </input>
                                     <small class="form-text text-muted">
                                         <i class="fas fa-info-circle"></i> Pilih berapa lama Anda ingin meminjam buku ini (maksimal 30 hari)
                                     </small>
@@ -273,10 +242,6 @@
                                 
                                 <!-- Info Durasi -->
                                 <div class="alert alert-info" ng-show="selectedDuration && borrowDurationInfo">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fas fa-info-circle mr-2"></i>
-                                        <strong>{{borrowDurationInfo}}</strong>
-                                    </div>
                                     <div class="row">
                                         <div class="col-md-6">
                                             <small class="d-block">

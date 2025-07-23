@@ -42,8 +42,7 @@
                     <li class="nav-item">
                         <a href="#/admin/kategori" class="nav-link" ng-click="navigateToCategories()">
                             <i class="nav-icon fas fa-tags"></i>
-                            <p>Kategori</p>
-                        </a>
+                            <p>Kategori</p></a>
                     </li>
                     <li class="nav-item">
                         <a href="#/admin/buku" class="nav-link" ng-click="navigateToBooks()">
@@ -109,6 +108,7 @@
 
                 <!-- Stats Cards -->
                 <div class="row" ng-if="!loading">
+                    <!-- Total Buku -->
                     <div class="col-lg-3 col-6">
                         <div class="small-box bg-info">
                             <div class="inner">
@@ -124,21 +124,23 @@
                         </div>
                     </div>
                     
+                    <!-- Total Stok -->
                     <div class="col-lg-3 col-6">
                         <div class="small-box bg-success">
                             <div class="inner">
-                                <h3>{{ stats.totalCategories | number }}</h3>
-                                <p>Total Kategori</p>
+                                <h3>{{ stats.totalStock | number }}</h3>
+                                <p>Total Stok</p>
                             </div>
                             <div class="icon">
-                                <i class="fas fa-tags"></i>
+                                <i class="fas fa-cubes"></i>
                             </div>
-                            <a href="#/admin/kategori" class="small-box-footer" ng-click="navigateToCategories()">
+                            <a href="#/admin/buku" class="small-box-footer" ng-click="navigateToBooks()">
                                 Selengkapnya <i class="fas fa-arrow-circle-right"></i>
                             </a>
                         </div>
                     </div>
 
+                    <!-- Total Member -->
                     <div class="col-lg-3 col-6">
                         <div class="small-box bg-warning">
                             <div class="inner">
@@ -154,11 +156,31 @@
                         </div>
                     </div>
 
+                    <!-- Total Pegawai -->
                     <div class="col-lg-3 col-6">
+                        <div class="small-box bg-secondary">
+                            <div class="inner">
+                                <h3>{{ stats.totalEmployees | number }}</h3>
+                                <p>Total Pegawai</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <a href="#/admin/pegawai" class="small-box-footer" ng-click="navigateToEmployees()">
+                                Selengkapnya <i class="fas fa-arrow-circle-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Stats Row -->
+                <div class="row" ng-if="!loading">
+                    <!-- Total Dipinjam -->
+                    <div class="col-lg-6 col-12">
                         <div class="small-box bg-danger">
                             <div class="inner">
-                                <h3>{{ stats.totalBorrows | number }}</h3>
-                                <p>Total Peminjaman</p>
+                                <h3>{{ stats.totalBorrowed | number }}</h3>
+                                <p>Sedang Dipinjam</p>
                             </div>
                             <div class="icon">
                                 <i class="fas fa-book-reader"></i>
@@ -168,16 +190,31 @@
                             </a>
                         </div>
                     </div>
+
+                    <!-- Total Dikembalikan -->
+                    <div class="col-lg-6 col-12">
+                        <div class="small-box bg-primary">
+                            <div class="inner">
+                                <h3>{{ stats.totalReturned | number }}</h3>
+                                <p>Total Dikembalikan</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-undo-alt"></i>
+                            </div>
+                            <a href="#/admin/peminjaman" class="small-box-footer" ng-click="navigateToBorrows()">
+                                Selengkapnya <i class="fas fa-arrow-circle-right"></i>
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Recent Activities -->
+                <!-- Quick Stats Overview -->
                 <div class="row" ng-if="!loading">
-                    <!-- Recent Books -->
-                    <div class="col-md-6">
+                    <div class="col-12">
                         <div class="card">
                             <div class="card-header">
                                 <h3 class="card-title">
-                                    <i class="fas fa-book mr-2"></i>Buku Terbaru
+                                    <i class="fas fa-chart-pie mr-2"></i>Ringkasan Statistik
                                 </h3>
                                 <div class="card-tools">
                                     <button class="btn btn-sm btn-tool" ng-click="refreshDashboard()">
@@ -185,202 +222,85 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="card-body p-0">
-                                <table class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 50%">Judul</th>
-                                            <th style="width: 30%">Kategori</th>
-                                            <th style="width: 20%">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr ng-repeat="book in recentBooks track by book.id">
-                                            <td>
-                                                <strong>{{ book.judul }}</strong>
-                                                <br>
-                                                <small class="text-muted">{{ book.penulis || 'Tidak ada penulis' }}</small>
-                                            </td>
-                                            <td>{{ book.category ? book.category.nama_kategori : 'Tidak ada kategori' }}</td>
-                                            <td>
-                                                <span class="badge" 
-                                                      ng-class="{
-                                                          'badge-success': book.stok > 0, 
-                                                          'badge-danger': book.stok <= 0,
-                                                          'badge-warning': book.stok == 1
-                                                      }">
-                                                    {{ book.stok > 0 ? 'Tersedia (' + book.stok + ')' : 'Tidak Tersedia' }}
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="info-box">
+                                            <span class="info-box-icon bg-info"><i class="fas fa-book"></i></span>
+                                            <div class="info-box-content">
+                                                <span class="info-box-text">Rasio Stok per Buku</span>
+                                                <span class="info-box-number">
+                                                    {{ stats.totalBooks > 0 ? (stats.totalStock / stats.totalBooks | number:1) : 0 }}
                                                 </span>
-                                            </td>
-                                        </tr>
-                                        <tr ng-if="recentBooks.length === 0">
-                                            <td colspan="3" class="text-center text-muted py-3">
-                                                <i class="fas fa-book fa-2x mb-2 d-block"></i>
-                                                Tidak ada data buku
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="card-footer text-center" ng-if="recentBooks.length > 0">
-                                <a href="#/admin/buku" ng-click="navigateToBooks()">Lihat Semua Buku</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Recent Categories -->
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <i class="fas fa-tags mr-2"></i>Kategori Terbaru
-                                </h3>
-                                <div class="card-tools">
-                                    <button class="btn btn-sm btn-tool" ng-click="refreshDashboard()">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
+                                                <span class="info-box-text">buku per judul</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="info-box">
+                                            <span class="info-box-icon bg-warning"><i class="fas fa-percentage"></i></span>
+                                            <div class="info-box-content">
+                                                <span class="info-box-text">Persentase Dipinjam</span>
+                                                <span class="info-box-number">
+                                                    {{ stats.totalStock > 0 ? ((stats.totalBorrowed / stats.totalStock) * 100 | number:1) : 0 }}%
+                                                </span>
+                                                <span class="info-box-text">dari total stok</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="info-box">
+                                            <span class="info-box-icon bg-success"><i class="fas fa-chart-line"></i></span>
+                                            <div class="info-box-content">
+                                                <span class="info-box-text">Total Transaksi</span>
+                                                <span class="info-box-number">
+                                                    {{ (stats.totalBorrowed + stats.totalReturned) | number }}
+                                                </span>
+                                                <span class="info-box-text">peminjaman</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="card-body p-0">
-                                <table class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 70%">Nama Kategori</th>
-                                            <th style="width: 30%">Jumlah Buku</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr ng-repeat="category in recentCategories track by category.id">
-                                            <td>
-                                                <strong>{{ category.nama_kategori }}</strong>
-                                                <br>
-                                                <small class="text-muted" ng-if="category.deskripsi">{{ category.deskripsi }}</small>
-                                            </td>
-                                            <td>
-                                                <span class="badge badge-info">{{ category.jumlah_buku || 0 }}</span>
-                                            </td>
-                                        </tr>
-                                        <tr ng-if="recentCategories.length === 0">
-                                            <td colspan="2" class="text-center text-muted py-3">
-                                                <i class="fas fa-tags fa-2x mb-2 d-block"></i>
-                                                Tidak ada data kategori
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="card-footer text-center" ng-if="recentCategories.length > 0">
-                                <a href="#/admin/kategori" ng-click="navigateToCategories()">Lihat Semua Kategori</a>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Recent Members and Borrows -->
+                <!-- System Status Card -->
                 <div class="row" ng-if="!loading">
-                    <!-- Recent Members -->
-                    <div class="col-md-6">
+                    <div class="col-12">
                         <div class="card">
                             <div class="card-header">
                                 <h3 class="card-title">
-                                    <i class="fas fa-users mr-2"></i>Member Terbaru
+                                    <i class="fas fa-info-circle mr-2"></i>Status Sistem
                                 </h3>
-                                <div class="card-tools">
-                                    <button class="btn btn-sm btn-tool" ng-click="refreshStats()">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Total Data:</strong></p>
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-book text-info mr-2"></i>{{ stats.totalBooks }} Judul Buku</li>
+                                            <li><i class="fas fa-cubes text-success mr-2"></i>{{ stats.totalStock }} Total Stok</li>
+                                            <li><i class="fas fa-users text-warning mr-2"></i>{{ stats.totalMembers }} Member Terdaftar</li>
+                                            <li><i class="fas fa-user-tie text-secondary mr-2"></i>{{ stats.totalEmployees }} Pegawai</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Aktivitas Peminjaman:</strong></p>
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-book-reader text-danger mr-2"></i>{{ stats.totalBorrowed }} Sedang Dipinjam</li>
+                                            <li><i class="fas fa-undo-alt text-primary mr-2"></i>{{ stats.totalReturned }} Telah Dikembalikan</li>
+                                            <li><i class="fas fa-chart-line text-success mr-2"></i>{{ (stats.totalBorrowed + stats.totalReturned) }} Total Transaksi</li>
+                                        </ul>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="card-body p-0">
-                                <table class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Nama</th>
-                                            <th>Email</th>
-                                            <th>Bergabung</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr ng-repeat="member in recentMembers track by member.id">
-                                            <td>
-                                                <strong>{{ member.name || member.nama }}</strong>
-                                                <br>
-                                                <small class="text-muted">{{ member.phone || member.telepon || 'Tidak ada telepon' }}</small>
-                                            </td>
-                                            <td>{{ member.email || 'Tidak ada email' }}</td>
-                                            <td>
-                                                <small>{{ member.created_at | date:'dd/MM/yyyy' }}</small>
-                                            </td>
-                                        </tr>
-                                        <tr ng-if="recentMembers.length === 0">
-                                            <td colspan="3" class="text-center text-muted py-3">
-                                                <i class="fas fa-users fa-2x mb-2 d-block"></i>
-                                                Tidak ada data member
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="card-footer text-center" ng-if="recentMembers.length > 0">
-                                <a href="#/admin/member" ng-click="navigateToMembers()">Lihat Semua Member</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Recent Borrows -->
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <i class="fas fa-book-reader mr-2"></i>Peminjaman Terbaru
-                                </h3>
-                                <div class="card-tools">
-                                    <button class="btn btn-sm btn-tool" ng-click="refreshStats()">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
+                                <div class="text-center mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        Data terakhir diperbarui: {{ new Date() | date:'dd/MM/yyyy HH:mm:ss' }}
+                                    </small>
                                 </div>
-                            </div>
-                            <div class="card-body p-0">
-                                <table class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Peminjam</th>
-                                            <th>Buku</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr ng-repeat="borrow in recentBorrows track by borrow.id">
-                                            <td>
-                                                <strong>{{ borrow.member ? borrow.member.name || borrow.member.nama : 'Tidak diketahui' }}</strong>
-                                            </td>
-                                            <td>
-                                                {{ borrow.book ? borrow.book.judul : 'Tidak diketahui' }}
-                                            </td>
-                                            <td>
-                                                <span class="badge" 
-                                                      ng-class="{
-                                                          'badge-warning': borrow.status === 'borrowed' || borrow.status === 'dipinjam',
-                                                          'badge-success': borrow.status === 'returned' || borrow.status === 'dikembalikan',
-                                                          'badge-danger': borrow.status === 'overdue' || borrow.status === 'terlambat'
-                                                      }">
-                                                    {{ borrow.status === 'borrowed' || borrow.status === 'dipinjam' ? 'Dipinjam' :
-                                                       borrow.status === 'returned' || borrow.status === 'dikembalikan' ? 'Dikembalikan' :
-                                                       borrow.status === 'overdue' || borrow.status === 'terlambat' ? 'Terlambat' : borrow.status }}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        <tr ng-if="recentBorrows.length === 0">
-                                            <td colspan="3" class="text-center text-muted py-3">
-                                                <i class="fas fa-book-reader fa-2x mb-2 d-block"></i>
-                                                Tidak ada data peminjaman
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="card-footer text-center" ng-if="recentBorrows.length > 0">
-                                <a href="#/admin/peminjaman" ng-click="navigateToBorrows()">Lihat Semua Peminjaman</a>
                             </div>
                         </div>
                     </div>

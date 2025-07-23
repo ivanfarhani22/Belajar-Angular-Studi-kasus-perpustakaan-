@@ -180,7 +180,6 @@ angular.module('perpusApp')
                     'Gagal memuat data kategori'
                 ))
                 .catch(error => {
-                    console.error('Load categories error:', error);
                     $scope.loading = false;
                     $scope.categories = [];
                     showMessage('error', error.message || 'Gagal memuat data kategori');
@@ -293,7 +292,6 @@ angular.module('perpusApp')
                 }
             })
             .catch(error => {
-                console.error(`${operation} error:`, error);
                 $scope.loading = false;
                 showMessage('error', error.message || errorMsg);
             });
@@ -333,7 +331,6 @@ angular.module('perpusApp')
                 AuthService.logout()
                     .then(() => window.location.href = '#/login')
                     .catch(error => {
-                        console.error('Logout error:', error);
                         window.location.href = '#/login';
                     });
             }

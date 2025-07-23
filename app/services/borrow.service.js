@@ -46,12 +46,8 @@
                 if (filters.sort_direction) params.sort_direction = filters.sort_direction;
             }
             
-            console.log('getAllBorrows called with params:', params);
-            
             return ApiService.get('/peminjaman', params)
                 .then(function(response) {
-                    console.log('DEBUG getAllBorrows response:', response);
-                    
                     var responseData = response.data;
                     
                     // Handle response structure berdasarkan backend Laravel response format
@@ -88,7 +84,6 @@
                     };
                 })
                 .catch(function(error) {
-                    console.error('Error getAllBorrows:', error);
                     return {
                         success: false,
                         message: error.data ? error.data.message : 'Gagal mengambil data peminjaman',
@@ -99,15 +94,6 @@
 
         // Method khusus untuk member - wrapper around getAllBorrows dengan filter member_id
         function getMemberBorrows(memberId, page, perPage, status, dateStart, dateEnd) {
-            console.log('getMemberBorrows called with:', {
-                memberId: memberId,
-                page: page,
-                perPage: perPage,
-                status: status,
-                dateStart: dateStart,
-                dateEnd: dateEnd
-            });
-            
             // Jika memberId tidak ada, coba ambil dari current user
             if (!memberId) {
                 memberId = getCurrentMemberId();
@@ -147,8 +133,6 @@
             
             return ApiService.get('/peminjaman/all', params)
                 .then(function(response) {
-                    console.log('DEBUG getAllBorrowsComplete response:', response);
-                    
                     var responseData = response.data;
                     var borrowData = responseData.data?.peminjaman || responseData.peminjaman || [];
                     
@@ -176,7 +160,6 @@
                     };
                 })
                 .catch(function(error) {
-                    console.error('Error getAllBorrowsComplete:', error);
                     return {
                         success: false,
                         message: error.data ? error.data.message : 'Gagal mengambil data peminjaman',
@@ -189,8 +172,6 @@
         function getBorrowById(id) {
             return ApiService.get('/peminjaman/show/' + id)
                 .then(function(response) {
-                    console.log('DEBUG getBorrowById response:', response);
-                    
                     var responseData = response.data;
                     
                     return {
@@ -200,7 +181,6 @@
                     };
                 })
                 .catch(function(error) {
-                    console.error('Error getBorrowById:', error);
                     return {
                         success: false,
                         message: error.data ? error.data.message : 'Gagal mengambil detail peminjaman',
@@ -225,8 +205,6 @@
             
             return ApiService.get('/peminjaman/return', params)
                 .then(function(response) {
-                    console.log('DEBUG getReturnList response:', response);
-                    
                     var responseData = response.data;
                     var returnData = responseData.data?.peminjaman || responseData.peminjaman || [];
                     
@@ -254,7 +232,6 @@
                     };
                 })
                 .catch(function(error) {
-                    console.error('Error getReturnList:', error);
                     return {
                         success: false,
                         message: error.data ? error.data.message : 'Gagal mengambil data pengembalian',
@@ -267,15 +244,8 @@
         function borrowBook(bukuId, memberId, borrowData) {
             var data = borrowData || {};
             
-            console.log('BorrowService.borrowBook called with:', {
-                bukuId: bukuId,
-                memberId: memberId,
-                borrowData: data
-            });
-            
             // Validasi data
             if (!bukuId) {
-                console.error('BorrowService: ID buku harus diisi');
                 return Promise.reject({
                     success: false,
                     message: 'ID buku harus diisi'
@@ -283,7 +253,6 @@
             }
             
             if (!memberId) {
-                console.error('BorrowService: ID member harus diisi');
                 return Promise.reject({
                     success: false,
                     message: 'ID member harus diisi'
@@ -292,8 +261,6 @@
             
             return ApiService.post('/peminjaman/book/' + bukuId + '/member/' + memberId, data)
                 .then(function(response) {
-                    console.log('DEBUG borrowBook response:', response);
-                    
                     var responseData = response.data;
                     
                     return {
@@ -306,7 +273,6 @@
                     };
                 })
                 .catch(function(error) {
-                    console.error('Error borrowBook:', error);
                     return {
                         success: false,
                         message: error.data ? error.data.message : 'Gagal melakukan peminjaman',
@@ -318,7 +284,6 @@
         // Fungsi alternatif untuk borrowBook tanpa perlu memberId (otomatis ambil dari session)
         function borrowBookAuto(bukuId, borrowData) {
             var memberId = getCurrentMemberId();
-            console.log('borrowBookAuto called with bukuId:', bukuId, 'found memberId:', memberId);
             
             if (!memberId) {
                 return Promise.reject({
@@ -330,7 +295,7 @@
             return borrowBook(bukuId, memberId, borrowData);
         }
 
-        // FIXED: GET /peminjaman/{id}/accept - setujui peminjaman
+        // GET /peminjaman/book/{id}/accept - setujui peminjaman
         function acceptBorrow(borrowId) {
             if (!borrowId) {
                 return Promise.reject({
@@ -339,13 +304,8 @@
                 });
             }
             
-            console.log('acceptBorrow called with borrowId:', borrowId);
-            
-            // PERBAIKAN: Sesuaikan dengan endpoint backend yang benar
-            return ApiService.get('/peminjaman/' + borrowId + '/accept')
+            return ApiService.get('/peminjaman/book/' + borrowId + '/accept')
                 .then(function(response) {
-                    console.log('DEBUG acceptBorrow response:', response);
-                    
                     var responseData = response.data;
                     
                     return {
@@ -355,7 +315,6 @@
                     };
                 })
                 .catch(function(error) {
-                    console.error('Error acceptBorrow:', error);
                     return {
                         success: false,
                         message: error.data ? error.data.message : 'Gagal menyetujui peminjaman',
@@ -377,8 +336,6 @@
             
             return ApiService.post('/peminjaman/book/' + borrowId + '/return', data)
                 .then(function(response) {
-                    console.log('DEBUG returnBook response:', response);
-                    
                     var responseData = response.data;
                     
                     return {
@@ -391,7 +348,6 @@
                     };
                 })
                 .catch(function(error) {
-                    console.error('Error returnBook:', error);
                     return {
                         success: false,
                         message: error.data ? error.data.message : 'Gagal mengembalikan buku',
@@ -414,11 +370,8 @@
 
         // Fungsi helper untuk mendapatkan member ID dari user yang sedang login
         function getCurrentMemberId() {
-            console.log('getCurrentMemberId called');
-            
             // Pastikan $window tersedia
             if (!$window || !$window.localStorage) {
-                console.warn('Browser storage not available');
                 return null;
             }
             
@@ -428,108 +381,89 @@
             // 1. Coba dari localStorage dengan key 'currentUser'
             try {
                 var currentUserStr = $window.localStorage.getItem('currentUser');
-                console.log('localStorage currentUser string:', currentUserStr);
                 if (currentUserStr && currentUserStr !== 'undefined' && currentUserStr !== 'null') {
                     currentUser = JSON.parse(currentUserStr);
-                    console.log('Parsed currentUser from localStorage:', currentUser);
                     if (currentUser && typeof currentUser === 'object') {
                         memberId = currentUser.id || currentUser.member_id || currentUser.user_id;
                         if (memberId) {
-                            console.log('Found memberId from localStorage currentUser:', memberId);
                             return memberId;
                         }
                     }
                 }
             } catch (e) {
-                console.warn('Error parsing currentUser from localStorage:', e);
+                // Ignore parsing error
             }
             
             // 2. Coba dari sessionStorage dengan key 'user'
             try {
                 var userSessionStr = $window.sessionStorage.getItem('user');
-                console.log('sessionStorage user string:', userSessionStr);
                 if (userSessionStr && userSessionStr !== 'undefined' && userSessionStr !== 'null') {
                     var userSession = JSON.parse(userSessionStr);
-                    console.log('Parsed user from sessionStorage:', userSession);
                     if (userSession && typeof userSession === 'object') {
                         memberId = userSession.id || userSession.member_id || userSession.user_id;
                         if (memberId) {
-                            console.log('Found memberId from sessionStorage user:', memberId);
                             return memberId;
                         }
                     }
                 }
             } catch (e) {
-                console.warn('Error parsing user from sessionStorage:', e);
+                // Ignore parsing error
             }
             
             // 3. Coba dari localStorage dengan key 'authData'
             try {
                 var authDataStr = $window.localStorage.getItem('authData');
-                console.log('localStorage authData string:', authDataStr);
                 if (authDataStr && authDataStr !== 'undefined' && authDataStr !== 'null') {
                     var authData = JSON.parse(authDataStr);
-                    console.log('Parsed authData from localStorage:', authData);
                     if (authData && typeof authData === 'object') {
                         memberId = authData.user?.id || authData.user?.member_id || authData.user?.user_id;
                         if (memberId) {
-                            console.log('Found memberId from localStorage authData:', memberId);
                             return memberId;
                         }
                     }
                 }
             } catch (e) {
-                console.warn('Error parsing authData from localStorage:', e);
+                // Ignore parsing error
             }
             
             // 4. Coba dari localStorage dengan key 'user'
             try {
                 var userStr = $window.localStorage.getItem('user');
-                console.log('localStorage user string:', userStr);
                 if (userStr && userStr !== 'undefined' && userStr !== 'null') {
                     var user = JSON.parse(userStr);
-                    console.log('Parsed user from localStorage:', user);
                     if (user && typeof user === 'object') {
                         memberId = user.id || user.member_id || user.user_id;
                         if (memberId) {
-                            console.log('Found memberId from localStorage user:', memberId);
                             return memberId;
                         }
                     }
                 }
             } catch (e) {
-                console.warn('Error parsing user from localStorage:', e);
+                // Ignore parsing error
             }
             
             // 5. Coba dari sessionStorage dengan key 'currentUser'
             try {
                 var sessionCurrentUserStr = $window.sessionStorage.getItem('currentUser');
-                console.log('sessionStorage currentUser string:', sessionCurrentUserStr);
                 if (sessionCurrentUserStr && sessionCurrentUserStr !== 'undefined' && sessionCurrentUserStr !== 'null') {
                     var sessionCurrentUser = JSON.parse(sessionCurrentUserStr);
-                    console.log('Parsed currentUser from sessionStorage:', sessionCurrentUser);
                     if (sessionCurrentUser && typeof sessionCurrentUser === 'object') {
                         memberId = sessionCurrentUser.id || sessionCurrentUser.member_id || sessionCurrentUser.user_id;
                         if (memberId) {
-                            console.log('Found memberId from sessionStorage currentUser:', memberId);
                             return memberId;
                         }
                     }
                 }
             } catch (e) {
-                console.warn('Error parsing currentUser from sessionStorage:', e);
+                // Ignore parsing error
             }
             
-            console.warn('getCurrentMemberId: No member ID found in any storage');
             return null;
         }
 
         // Fungsi untuk membersihkan data user (berguna untuk logout)
         function clearUserData() {
-            console.log('clearUserData called');
-            
             if (!$window || !$window.localStorage) {
-                console.warn('Browser storage not available');
                 return;
             }
             
@@ -549,10 +483,8 @@
                     $window.localStorage.removeItem(key);
                     $window.sessionStorage.removeItem(key);
                 });
-                
-                console.log('User data cleared from storage');
             } catch (e) {
-                console.warn('Error clearing user data:', e);
+                // Ignore error
             }
         }
     }

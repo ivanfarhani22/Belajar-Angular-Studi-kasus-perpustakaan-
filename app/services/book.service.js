@@ -463,7 +463,6 @@ angular.module('perpusApp').service('BookService', [
 
             // Log untuk debugging
             for (var pair of formData.entries()) {
-                console.log(pair[0] + ':', pair[1]);
             }
 
             return $http({
@@ -479,7 +478,6 @@ angular.module('perpusApp').service('BookService', [
             }).then(function(response) {
                 return HttpHelper.handleResponse(response, 'Books imported successfully');
             }).catch(function(error) {
-                console.error('Import error:', error);
                 return HttpHelper.handleError(error, 'Failed to import books');
             });
         };

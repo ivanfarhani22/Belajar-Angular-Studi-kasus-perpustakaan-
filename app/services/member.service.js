@@ -25,14 +25,7 @@
 
         return service;
 
-        /**
-         * List member (datatable server side) - MODIFIED untuk client-side search
-         * @param {Object} datatableParams - DataTable parameters
-         * @returns {Promise}
-         */
         function getServerSideMembers(datatableParams) {
-            console.log('getServerSideMembers called with params:', datatableParams);
-            
             // Jika ada search query, gunakan client-side filtering
             if (datatableParams.search && datatableParams.search.value && datatableParams.search.value.trim()) {
                 return performClientSideSearch(datatableParams);
@@ -43,27 +36,17 @@
             
             return ApiService.get(API_CONFIG.ENDPOINTS.MEMBERS.ALL, params)
                 .then(function(response) {
-                    console.log('getServerSideMembers Full API Response:', response);
                     return formatDatatableResponse(response.data, datatableParams.draw);
                 })
                 .catch(function(error) {
-                    console.error('getServerSideMembers error:', error);
                     return handleDatatableError(error, datatableParams.draw);
                 });
         }
 
-        /**
-         * Perform client-side search untuk DataTable
-         * @param {Object} datatableParams - DataTable parameters
-         * @returns {Promise}
-         */
         function performClientSideSearch(datatableParams) {
-            console.log('performClientSideSearch called with params:', datatableParams);
-            
             return getAllMembersFromCache()
                 .then(function(allMembers) {
                     var searchQuery = datatableParams.search.value.toLowerCase().trim();
-                    console.log('Client-side search query:', searchQuery);
                     
                     // Filter data berdasarkan search query
                     var filteredMembers = allMembers.filter(function(member) {
@@ -75,8 +58,6 @@
                             (member.member_number && member.member_number.toLowerCase().includes(searchQuery))
                         );
                     });
-                    
-                    console.log('Filtered members count:', filteredMembers.length);
                     
                     // Handle sorting
                     if (datatableParams.order && datatableParams.order[0]) {
@@ -105,8 +86,6 @@
                     var length = datatableParams.length || 10;
                     var paginatedMembers = filteredMembers.slice(start, start + length);
                     
-                    console.log('Paginated members count:', paginatedMembers.length);
-                    
                     return {
                         draw: parseInt(datatableParams.draw),
                         recordsTotal: allMembers.length,
@@ -117,15 +96,9 @@
                     };
                 })
                 .catch(function(error) {
-                    console.error('performClientSideSearch error:', error);
                     return handleDatatableError(error, datatableParams.draw);
                 });
         }
-
-        /**
-         * Get all members from cache or API
-         * @returns {Promise}
-         */
         function getAllMembersFromCache() {
             var now = Date.now();
             
@@ -133,26 +106,17 @@
             if (service._allMembersCache && 
                 service._cacheTimestamp && 
                 (now - service._cacheTimestamp) < service._cacheExpiry) {
-                console.log('Using cached members data');
                 return Promise.resolve(service._allMembersCache);
             }
-            
-            console.log('Fetching fresh members data for cache');
             
             // Fetch all members data (tanpa pagination)
             return fetchAllMembersData()
                 .then(function(members) {
                     service._allMembersCache = members;
                     service._cacheTimestamp = now;
-                    console.log('Cached members data updated, total:', members.length);
                     return members;
                 });
         }
-
-        /**
-         * Fetch all members data from API (multiple requests if needed)
-         * @returns {Promise}
-         */
         function fetchAllMembersData() {
             var allMembers = [];
             var currentPage = 1;
@@ -184,16 +148,7 @@
             return fetchPage(currentPage);
         }
 
-        /**
-         * Search member - MODIFIED untuk client-side search
-         * @param {string} query - Search query
-         * @param {number} limit - Result limit
-         * @param {number} page - Page number
-         * @returns {Promise}
-         */
         function searchMembers(query, limit, page) {
-            console.log('searchMembers called with:', { query, limit, page });
-            
             if (!query || query.trim() === '') {
                 // Jika tidak ada query, gunakan getAllMembers biasa
                 return getAllMembers({
@@ -246,20 +201,11 @@
                     };
                 })
                 .catch(function(error) {
-                    console.error('searchMembers error:', error);
                     return handleError(error, 'Search failed');
                 });
         }
 
-        /**
-         * Search member for borrowing purposes - MODIFIED untuk client-side search
-         * @param {string} query - Search query
-         * @param {number} limit - Result limit
-         * @returns {Promise}
-         */
         function searchMembersForBorrowing(query, limit) {
-            console.log('searchMembersForBorrowing called with:', { query, limit });
-            
             if (!query || query.trim() === '') {
                 // Jika tidak ada query, ambil data terbaru
                 return getAllMembers({
@@ -297,28 +243,19 @@
                     return formatMembersForBorrowing(filteredMembers, filteredMembers.length, 'Search completed');
                 })
                 .catch(function(error) {
-                    console.error('searchMembersForBorrowing error:', error);
                     return handleError(error, 'Search failed');
                 });
         }
 
-        /**
-         * Clear cache (untuk di-call ketika ada perubahan data)
-         */
         function clearCache() {
             service._allMembersCache = null;
             service._cacheTimestamp = null;
-            console.log('Members cache cleared');
         }
 
         // Expose clearCache function
         service.clearCache = clearCache;
 
-        /**
-         * Get all members without pagination (menggunakan endpoint /all)
-         * @param {Object} options - Options {search, sort_by, sort_direction}
-         * @returns {Promise}
-         */
+
         function getAllMembers(options) {
             options = options || {};
             
@@ -328,13 +265,8 @@
                 sort_direction: options.sort_direction || 'desc'
             };
 
-            console.log('getAllMembers params:', params);
-            console.log('Request URL:', API_CONFIG.ENDPOINTS.MEMBERS.ALL);
-
             return ApiService.get(API_CONFIG.ENDPOINTS.MEMBERS.ALL, params)
                 .then(function(response) {
-                    console.log('getAllMembers Full API Response:', response);
-                    
                     var result = processApiResponse(response.data);
                     
                     return {
@@ -345,16 +277,11 @@
                     };
                 })
                 .catch(function(error) {
-                    console.error('getAllMembers error:', error);
                     return handleError(error, 'Failed to fetch all members');
                 });
         }
 
-        /**
-         * Get all members with pagination (untuk ambil data per halaman)
-         * @param {Object} options - Options {page, per_page, search, sort_by, sort_direction}
-         * @returns {Promise}
-         */
+
         function getAllMembersWithPagination(options) {
             options = options || {};
             
@@ -366,13 +293,8 @@
                 sort_direction: options.sort_direction || 'desc'
             };
 
-            console.log('getAllMembersWithPagination params:', params);
-            console.log('Request URL:', API_CONFIG.ENDPOINTS.MEMBERS.ALL);
-
             return ApiService.get(API_CONFIG.ENDPOINTS.MEMBERS.ALL, params)
                 .then(function(response) {
-                    console.log('getAllMembersWithPagination Full API Response:', response);
-                    
                     var result = processApiResponse(response.data);
                     
                     return {
@@ -384,16 +306,10 @@
                     };
                 })
                 .catch(function(error) {
-                    console.error('getAllMembersWithPagination error:', error);
                     return handleError(error, 'Failed to fetch members');
                 });
         }
 
-        /**
-         * Get member detail
-         * @param {number} memberId - Member ID
-         * @returns {Promise}
-         */
         function getMemberDetail(memberId) {
             if (!memberId) {
                 return Promise.reject({
@@ -404,12 +320,8 @@
 
             var endpoint = API_CONFIG.ENDPOINTS.MEMBERS.DETAIL.replace('{id}', memberId);
             
-            console.log('getMemberDetail endpoint:', endpoint);
-            
             return ApiService.get(endpoint)
                 .then(function(response) {
-                    console.log('getMemberDetail Full API Response:', response);
-                    
                     return {
                         success: true,
                         data: response.data.user || response.data,
@@ -417,20 +329,10 @@
                     };
                 })
                 .catch(function(error) {
-                    console.error('getMemberDetail error:', error);
                     return handleError(error, 'Failed to fetch member detail');
                 });
         }
 
-        // ======= HELPER FUNCTIONS =======
-
-        /**
-         * Format members data for borrowing purposes (autocomplete/select)
-         * @param {Array} members - Members array
-         * @param {number} total - Total count
-         * @param {string} message - Response message
-         * @returns {Object} - Formatted response
-         */
         function formatMembersForBorrowing(members, total, message) {
             var formattedMembers = members.map(function(member) {
                 return {
@@ -455,14 +357,8 @@
             };
         }
 
-        /**
-         * Process API response - unified function to handle different response structures
-         * @param {Object} responseData - Raw API response data
-         * @returns {Object} - Processed result with users, pagination, and total
-         */
+
         function processApiResponse(responseData) {
-            console.log('processApiResponse input:', responseData);
-            
             var result = {
                 users: [],
                 pagination: {
@@ -485,31 +381,26 @@
             if (responseData && responseData.data && responseData.data.users) {
                 usersData = responseData.data.users.data || responseData.data.users;
                 paginationSource = responseData.data.users;
-                console.log('processApiResponse - found structure: data.users');
             }
             // Check for direct users array
             else if (responseData && responseData.users) {
                 usersData = responseData.users.data || responseData.users;
                 paginationSource = responseData.users;
-                console.log('processApiResponse - found structure: users');
             }
             // Check for direct data array
             else if (responseData && responseData.data && Array.isArray(responseData.data)) {
                 usersData = responseData.data;
                 paginationSource = responseData;
-                console.log('processApiResponse - found structure: data (array)');
             }
             // Check for root array
             else if (responseData && Array.isArray(responseData)) {
                 usersData = responseData;
                 paginationSource = null;
-                console.log('processApiResponse - found structure: root array');
             }
             // Fallback
             else if (responseData) {
                 usersData = responseData.data || responseData.users || [];
                 paginationSource = responseData;
-                console.log('processApiResponse - fallback structure');
             }
 
             // Extract users array
@@ -537,12 +428,6 @@
             // Set total
             result.total = result.pagination.total || result.users.length;
 
-            console.log('processApiResponse result:', {
-                usersCount: result.users.length,
-                total: result.total,
-                pagination: result.pagination
-            });
-
             return result;
         }
 
@@ -564,13 +449,10 @@
                 }
             }
 
-            console.log('buildDatatableParams result:', params);
             return params;
         }
 
         function formatDatatableResponse(responseData, draw) {
-            console.log('formatDatatableResponse input:', responseData);
-            
             var result = processApiResponse(responseData);
             
             var datatableResult = {
@@ -582,19 +464,10 @@
                 message: responseData.message || 'Success'
             };
             
-            console.log('formatDatatableResponse result:', {
-                draw: datatableResult.draw,
-                recordsTotal: datatableResult.recordsTotal,
-                recordsFiltered: datatableResult.recordsFiltered,
-                dataLength: datatableResult.data.length
-            });
-            
             return datatableResult;
         }
 
         function handleDatatableError(error, draw) {
-            console.error('handleDatatableError:', error);
-            
             return {
                 draw: parseInt(draw),
                 recordsTotal: 0,
@@ -606,8 +479,6 @@
         }
 
         function handleError(error, defaultMessage) {
-            console.error('handleError:', error);
-            
             return {
                 success: false,
                 data: [],
