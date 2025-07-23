@@ -253,9 +253,57 @@ angular.module('perpusApp')
                 return '-';
             }
         };
+
+        // Overdue utility functions (new)
+        $scope.isOverdue = function(borrow) {
+            var returnDate = borrow.tanggal_pengembalian || 
+                           borrow.due_date || 
+                           borrow.return_date ||
+                           borrow.tanggal_kembali;
+            
+            if (!returnDate) return false;
+            
+            // Only check overdue if book is still borrowed (not returned)
+            var baseStatus = $scope.getBaseStatus(borrow);
+            if (baseStatus !== 'borrowed') return false;
+            
+            return new Date() > new Date(returnDate);
+        };
+
+        $scope.getRemainingDays = function(borrow) {
+            var returnDate = borrow.tanggal_pengembalian || 
+                           borrow.due_date || 
+                           borrow.return_date ||
+                           borrow.tanggal_kembali;
+            
+            if (!returnDate) return 0;
+            
+            var now = new Date();
+            var due = new Date(returnDate);
+            var diffTime = due - now;
+            var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            return diffDays > 0 ? diffDays : 0;
+        };
+
+        $scope.getOverdueDays = function(borrow) {
+            var returnDate = borrow.tanggal_pengembalian || 
+                           borrow.due_date || 
+                           borrow.return_date ||
+                           borrow.tanggal_kembali;
+            
+            if (!returnDate) return 0;
+            
+            var now = new Date();
+            var due = new Date(returnDate);
+            var diffTime = now - due;
+            var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            return diffDays > 0 ? diffDays : 0;
+        };
         
-        // Status functions
-        $scope.getActualStatus = function(borrow) {
+        // Status functions (updated with overdue support)
+        $scope.getBaseStatus = function(borrow) {
             // Check actual return first
             if (borrow.tanggal_pengembalian_actual || 
                 borrow.tanggal_kembali_aktual || 
@@ -274,12 +322,24 @@ angular.module('perpusApp')
             }
         };
 
+        $scope.getActualStatus = function(borrow) {
+            var baseStatus = $scope.getBaseStatus(borrow);
+            
+            // Check if overdue
+            if (baseStatus === 'borrowed' && $scope.isOverdue(borrow)) {
+                return 'overdue';
+            }
+            
+            return baseStatus;
+        };
+
         $scope.canReturnBook = function(borrow) {
-            return $scope.getActualStatus(borrow) === 'borrowed';
+            var baseStatus = $scope.getBaseStatus(borrow);
+            return baseStatus === 'borrowed'; // Can return both borrowed and overdue
         };
 
         $scope.shouldShowReturnButton = function(borrow) {
-            return $scope.getActualStatus(borrow) === 'borrowed' && !$scope.returning;
+            return $scope.canReturnBook(borrow) && !$scope.returning;
         };
         
         $scope.getStatusClass = function(borrow) {
@@ -288,6 +348,7 @@ angular.module('perpusApp')
                 case 'pending': return 'badge badge-warning';
                 case 'borrowed': return 'badge badge-info';
                 case 'returned': return 'badge badge-success';
+                case 'overdue': return 'badge badge-danger';
                 default: return 'badge badge-secondary';
             }
         };
@@ -298,6 +359,7 @@ angular.module('perpusApp')
                 case 'pending': return 'Menunggu Persetujuan';
                 case 'borrowed': return 'Dipinjam';
                 case 'returned': return 'Sudah Dikembalikan';
+                case 'overdue': return 'Terlambat (' + $scope.getOverdueDays(borrow) + ' hari)';
                 default: return 'Status Tidak Diketahui';
             }
         };
@@ -309,7 +371,10 @@ angular.module('perpusApp')
                 return;
             }
             
-            if (!confirm('Apakah Anda yakin ingin mengembalikan buku "' + $scope.getBookTitle(borrow) + '"?')) {
+            var statusText = $scope.getActualStatus(borrow) === 'overdue' ? 
+                ' (Terlambat ' + $scope.getOverdueDays(borrow) + ' hari)' : '';
+            
+            if (!confirm('Apakah Anda yakin ingin mengembalikan buku "' + $scope.getBookTitle(borrow) + '"' + statusText + '?')) {
                 return;
             }
             

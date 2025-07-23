@@ -1,4 +1,3 @@
-// app/app.js
 (function() {
     'use strict';
 

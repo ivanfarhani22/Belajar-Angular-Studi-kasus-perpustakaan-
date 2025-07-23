@@ -1,4 +1,3 @@
-// app/controllers/auth/login.controller.js
 (function() {
     'use strict';
 

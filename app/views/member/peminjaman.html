@@ -160,6 +160,7 @@
                                         <td>
                                             <small class="text-muted">
                                                 <span ng-if="getActualStatus(borrow) === 'returned'">Dikembalikan:</span>
+                                                <span ng-if="getActualStatus(borrow) === 'overdue'">Dikembalikan:</span>
                                                 <span ng-if="getActualStatus(borrow) === 'borrowed'">Target:</span>
                                                 <span ng-if="getActualStatus(borrow) === 'pending'">Rencana:</span>
                                             </small><br>

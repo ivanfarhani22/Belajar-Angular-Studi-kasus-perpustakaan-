@@ -1,4 +1,3 @@
-// app/controllers/auth/register.controller.js
 (function() {
     'use strict';
 
