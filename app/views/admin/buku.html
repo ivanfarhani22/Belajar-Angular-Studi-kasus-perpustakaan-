@@ -258,12 +258,23 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Update bagian Cover Buku di modal form -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Cover Buku</label>
                                     <input type="file" class="form-control" accept="image/*" 
-                                           onchange="angular.element(this).scope().handleFileSelect(event)">
+                                        onchange="angular.element(this).scope().handleFileSelect(event)">
+                                    <small class="form-text text-muted">Format: JPG, JPEG, PNG. Maksimal 5MB</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6" ng-if="bookForm.preview">
+                                <div class="form-group">
+                                    <label>Preview Cover</label>
+                                    <div class="text-center">
+                                        <img ng-src="{{bookForm.preview}}" alt="Preview Cover" 
+                                            style="max-width: 150px; max-height: 200px; border: 1px solid #ddd; border-radius: 4px;">
+                                    </div>
                                 </div>
                             </div>
                         </div>

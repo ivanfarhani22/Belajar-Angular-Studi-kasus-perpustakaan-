@@ -59,8 +59,8 @@ angular.module('perpusApp')
         },
         HEADERS: {
             DEFAULT: {
-                'Accept': 'application/json'
-                // Content-Type akan diatur otomatis untuk FormData
+                'Accept': 'application/json',
+                'Content-Type': 'multipart/form-data'
             }
         }
     });

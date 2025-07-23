@@ -107,7 +107,7 @@
                             <div class="icon">
                                 <i class="fas fa-book"></i>
                             </div>
-                            <a href="#/member/buku" class="small-box-footer" ng-click="navigateToBooks()">
+                            <a href="#/admin/buku" class="small-box-footer" ng-click="navigateToBooks()">
                                 Selengkapnya <i class="fas fa-arrow-circle-right"></i>
                             </a>
                         </div>
@@ -123,7 +123,7 @@
                             <div class="icon">
                                 <i class="fas fa-cubes"></i>
                             </div>
-                            <a href="#/member/buku" class="small-box-footer" ng-click="navigateToBooks()">
+                            <a href="#/admin/buku" class="small-box-footer" ng-click="navigateToBooks()">
                                 Selengkapnya <i class="fas fa-arrow-circle-right"></i>
                             </a>
                         </div>
@@ -174,7 +174,7 @@
                             <div class="icon">
                                 <i class="fas fa-book-reader"></i>
                             </div>
-                            <a href="#/member/peminjaman" class="small-box-footer" ng-click="navigateToBorrows()">
+                            <a href="#/admin/peminjaman" class="small-box-footer" ng-click="navigateToBorrows()">
                                 Selengkapnya <i class="fas fa-arrow-circle-right"></i>
                             </a>
                         </div>
@@ -190,7 +190,7 @@
                             <div class="icon">
                                 <i class="fas fa-undo-alt"></i>
                             </div>
-                            <a href="#/member/peminjaman" class="small-box-footer" ng-click="navigateToBorrows()">
+                            <a href="#/admin/peminjaman" class="small-box-footer" ng-click="navigateToBorrows()">
                                 Selengkapnya <i class="fas fa-arrow-circle-right"></i>
                             </a>
                         </div>
@@ -249,46 +249,6 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- System Status Card -->
-                <div class="row" ng-if="!loading">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <i class="fas fa-info-circle mr-2"></i>Status Sistem
-                                </h3>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <p><strong>Total Data:</strong></p>
-                                        <ul class="list-unstyled">
-                                            <li><i class="fas fa-book text-info mr-2"></i>{{ stats.totalBooks }} Judul Buku</li>
-                                            <li><i class="fas fa-cubes text-success mr-2"></i>{{ stats.totalStock }} Total Stok</li>
-                                            <li><i class="fas fa-users text-warning mr-2"></i>{{ stats.totalMembers }} Member Terdaftar</li>
-                                            <li><i class="fas fa-user-tie text-secondary mr-2"></i>{{ stats.totalEmployees }} Pegawai</li>
-                                        </ul>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <p><strong>Aktivitas Peminjaman:</strong></p>
-                                        <ul class="list-unstyled">
-                                            <li><i class="fas fa-book-reader text-danger mr-2"></i>{{ stats.totalBorrowed }} Sedang Dipinjam</li>
-                                            <li><i class="fas fa-undo-alt text-primary mr-2"></i>{{ stats.totalReturned }} Telah Dikembalikan</li>
-                                            <li><i class="fas fa-chart-line text-success mr-2"></i>{{ (stats.totalBorrowed + stats.totalReturned) }} Total Transaksi</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="text-center mt-3">
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock mr-1"></i>
-                                        Data terakhir diperbarui: {{ new Date() | date:'dd/MM/yyyy HH:mm:ss' }}
-                                    </small>
                                 </div>
                             </div>
                         </div>
